@@ -5,6 +5,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Azure.WebJobs.Script.Config;
 using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Script
@@ -14,18 +15,27 @@ namespace Microsoft.Azure.WebJobs.Script
     internal class KubernetesDistributedLockManager : IDistributedLockManager
     {
         private readonly KubernetesClient _kubernetesClient;
+        private readonly string _websiteInstanceId;
         private readonly ILogger _logger;
 
-        public KubernetesDistributedLockManager(ILoggerFactory loggerFactory, IEnvironment environment)
+        public KubernetesDistributedLockManager(IEnvironment environment,
+            ScriptSettingsManager settingsManager,
+            ILogger<KubernetesDistributedLockManager> logger)
+            : this(new KubernetesClient(environment), settingsManager)
         {
-            _logger = loggerFactory.CreateLogger(ScriptConstants.LogCategoryHostGeneral);
-            _kubernetesClient = new KubernetesClient(environment);
+            _logger = logger;
+        }
+
+        internal KubernetesDistributedLockManager(KubernetesClient client, ScriptSettingsManager settingsManager)
+        {
+            _kubernetesClient = client;
+            _websiteInstanceId = settingsManager.AzureWebsiteInstanceId;
         }
 
         public async Task<string> GetLockOwnerAsync(string account, string lockId, CancellationToken cancellationToken)
         {
             _logger.LogDebug("K8se: getlockownerasync");
-            var response = await _kubernetesClient.GetLock(lockId);
+            var response = await _kubernetesClient.GetLock(lockId, cancellationToken);
             return response.Owner;
         }
 
@@ -40,15 +50,15 @@ namespace Microsoft.Azure.WebJobs.Script
         {
             var kubernetesLock = (KubernetesLockHandle)lockHandle;
             _logger.LogDebug($"K8se: RenewAsync for {kubernetesLock.LockId} owner {kubernetesLock.Owner} for time {kubernetesLock.LockPeriod.ToString()}");
-            var duration = TimeSpan.Parse(kubernetesLock.LockPeriod);
-            var renewedLockHandle = await _kubernetesClient.TryAcquireLock(kubernetesLock.LockId, kubernetesLock.Owner, duration, cancellationToken);
+            var renewedLockHandle = await _kubernetesClient.TryAcquireLock(kubernetesLock.LockId, kubernetesLock.Owner, TimeSpan.Parse(kubernetesLock.LockPeriod), cancellationToken);
             return !string.IsNullOrEmpty(renewedLockHandle.LockId);
         }
 
         public async Task<IDistributedLock> TryLockAsync(string account, string lockId, string lockOwnerId, string proposedLeaseId, TimeSpan lockPeriod, CancellationToken cancellationToken)
         {
             _logger.LogDebug($"K8se: Trylockasync for {lockId} owner {lockOwnerId} for time {lockPeriod.ToString()}");
-            var kubernetesLock = await _kubernetesClient.TryAcquireLock(lockId, lockOwnerId, lockPeriod, cancellationToken);
+            var ownerId = string.IsNullOrEmpty(lockOwnerId) ? _websiteInstanceId : lockOwnerId;
+            var kubernetesLock = await _kubernetesClient.TryAcquireLock(lockId, ownerId, lockPeriod, cancellationToken);
             if (string.IsNullOrEmpty(kubernetesLock.LockId))
             {
                 return null;

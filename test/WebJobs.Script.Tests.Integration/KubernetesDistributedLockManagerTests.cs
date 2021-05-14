@@ -11,23 +11,28 @@ using Moq.Protected;
 using System.Net;
 using Newtonsoft.Json;
 using static Microsoft.Azure.WebJobs.Script.EnvironmentSettingNames;
+using Microsoft.Azure.WebJobs.Script.Config;
 
 namespace Microsoft.Azure.WebJobs.Script.Tests
 {
     public class KubernetesDistributedLockManagerTests
     {
+        private const string TestHttpLeaderEndpoint = "http://test-endpoint";
+
         [Theory]
         [InlineData(HttpStatusCode.BadRequest, "testlock", "testowner", null, null)]
         [InlineData(HttpStatusCode.OK, "testlock", "testowner", "testlock", "testowner")]
         public async Task AcquireLockRequest_ReturnsCorrectLockHandle(HttpStatusCode status, string lockId, string ownerId, string expectedLockId, string expectedOwnerId)
         {
-
             Mock<IEnvironment> _environment = new Mock<IEnvironment>();
-            _environment.Setup(p => p.GetEnvironmentVariable(HttpLeaderEndpoint)).Returns("http://test-endpoint");
+            _environment.Setup(p => p.GetEnvironmentVariable(HttpLeaderEndpoint)).Returns(TestHttpLeaderEndpoint);
 
             var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
             handlerMock.Protected().Setup<Task<HttpResponseMessage>>("SendAsync",
-                       ItExpr.IsAny<HttpRequestMessage>(),
+                       ItExpr.Is<HttpRequestMessage>(request =>
+                       request.Method == HttpMethod.Post &&
+                       request.RequestUri.AbsoluteUri.Equals(
+                           $"{TestHttpLeaderEndpoint}/lock/acquire?name={lockId}&owner={ownerId}&duration=5&renewDeadline=10")),
                        ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage
                        {
                            StatusCode = status
@@ -36,25 +41,67 @@ namespace Microsoft.Azure.WebJobs.Script.Tests
             var httpClient = new HttpClient(handlerMock.Object);
 
             var lockClient = new KubernetesClient(_environment.Object, httpClient);
-            var lockHandle = await lockClient.TryAcquireLock(lockId, ownerId, TimeSpan.FromSeconds(5), new CancellationToken());
-            Assert.Equal(expectedLockId, lockHandle.LockId);
-            Assert.Equal(expectedOwnerId, lockHandle.Owner);
+            var lockManager = new KubernetesDistributedLockManager(lockClient, ScriptSettingsManager.Instance);
+            var lockHandle = await lockManager.TryLockAsync("", lockId, ownerId, "",TimeSpan.FromSeconds(5), new CancellationToken());
+
+            if (status == HttpStatusCode.OK)
+            {
+                Assert.Equal(expectedLockId, lockHandle.LockId);
+                Assert.Equal(expectedOwnerId, ((KubernetesLockHandle)lockHandle).Owner);
+            }
+            else
+            {
+                Assert.Null(lockHandle);
+            }
+        }
+
+        [Fact]
+        public async Task AcquireLockRequest_UsesWebsiteinstanceIdIfOwnerMissing()
+        {
+            Mock<IEnvironment> _environment = new Mock<IEnvironment>();
+            _environment.Setup(p => p.GetEnvironmentVariable(HttpLeaderEndpoint)).Returns(TestHttpLeaderEndpoint);
+
+            string lockId = "test-lock";
+            string instanceId = ScriptSettingsManager.Instance.AzureWebsiteInstanceId;
+
+            var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+            handlerMock.Protected().Setup<Task<HttpResponseMessage>>("SendAsync",
+                       ItExpr.Is<HttpRequestMessage>(request =>
+                       request.Method == HttpMethod.Post &&
+                       request.RequestUri.AbsoluteUri.Equals(
+                           $"{TestHttpLeaderEndpoint}/lock/acquire?name={lockId}&owner={instanceId}&duration=5&renewDeadline=10")),
+                       ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage
+                       {
+                           StatusCode = HttpStatusCode.OK
+                       });
+
+            var httpClient = new HttpClient(handlerMock.Object);
+
+            var lockClient = new KubernetesClient(_environment.Object, httpClient);
+            var lockManager = new KubernetesDistributedLockManager(lockClient, ScriptSettingsManager.Instance);
+            var lockHandle = await lockManager.TryLockAsync("", lockId, "", "", TimeSpan.FromSeconds(5), new CancellationToken());
+
+            Assert.Equal(lockId, lockHandle.LockId);
+            Assert.Equal(instanceId, ((KubernetesLockHandle)lockHandle).Owner);
         }
 
         [Theory]
-        [InlineData(null ,null)]
         [InlineData("", "")]
-        [InlineData("", null)]
         [InlineData(null, "")]
+        [InlineData(null, null)]
+        [InlineData("", null)]
+        [InlineData("", "testOwner")]
         public async Task AcquireLockRequestThrowsOnInvalidInput(string lockId, string ownerId)
         {
-
+>>>>>>> digandhi/k8se-lock-manager
             Mock<IEnvironment> _environment = new Mock<IEnvironment>();
             var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
             var httpClient = new HttpClient(handlerMock.Object);
 
             var lockClient = new KubernetesClient(_environment.Object, httpClient);
-            await Assert.ThrowsAsync<ArgumentNullException>(() => lockClient.TryAcquireLock(lockId, ownerId, TimeSpan.FromSeconds(5), new CancellationToken()));
+            var lockManager = new KubernetesDistributedLockManager(lockClient, ScriptSettingsManager.Instance);
+            await Assert.ThrowsAsync<ArgumentNullException>(() => lockManager.TryLockAsync
+            ("", lockId, ownerId, "", TimeSpan.FromSeconds(5), new CancellationToken()));
         }
 
         [Theory]
@@ -70,7 +117,9 @@ namespace Microsoft.Azure.WebJobs.Script.Tests
 
             var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
             handlerMock.Protected().Setup<Task<HttpResponseMessage>>("SendAsync",
-                       ItExpr.IsAny<HttpRequestMessage>(),
+                       ItExpr.Is<HttpRequestMessage>(request =>
+                              request.Method == HttpMethod.Get &&
+                              request.RequestUri.AbsoluteUri.Equals($"{TestHttpLeaderEndpoint}/lock?name={lockId}")),
                        ItExpr.IsAny<CancellationToken>()).ReturnsAsync(new HttpResponseMessage
                        {
                            StatusCode = status,
@@ -80,15 +129,17 @@ namespace Microsoft.Azure.WebJobs.Script.Tests
             var httpClient = new HttpClient(handlerMock.Object);
 
             var lockClient = new KubernetesClient(_environment.Object, httpClient);
+            var lockManager = new KubernetesDistributedLockManager(lockClient, ScriptSettingsManager.Instance);
 
             if (status != HttpStatusCode.OK)
             {
-                await Assert.ThrowsAsync<HttpRequestException>(() => lockClient.GetLock(lockId));
+                await Assert.ThrowsAsync<HttpRequestException>(() => lockManager.GetLockOwnerAsync(
+                    "", lockId, new CancellationToken()));
             }
             else
             {
-                var actualLockHandle = await lockClient.GetLock(lockId);
-                Assert.Equal(expectedLockHandle.Owner, actualLockHandle.Owner);
+                var actualOwner = await lockManager.GetLockOwnerAsync("", lockId, new CancellationToken());
+                Assert.Equal(expectedLockHandle.Owner, actualOwner);
             }
         }
 
@@ -97,31 +148,34 @@ namespace Microsoft.Azure.WebJobs.Script.Tests
         [InlineData("")]
         public async Task GetLockRequest_ThrowsOnInvalidInput(string lockId)
         {
-
             Mock<IEnvironment> _environment = new Mock<IEnvironment>();
             var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
 
             var httpClient = new HttpClient(handlerMock.Object);
-            var lockClient = new KubernetesClient(_environment.Object, httpClient);
+            var lockManager = new KubernetesDistributedLockManager(
+                new KubernetesClient(_environment.Object, httpClient), ScriptSettingsManager.Instance);
 
-            await Assert.ThrowsAsync<ArgumentNullException>(() => lockClient.GetLock(lockId));    
+            await Assert.ThrowsAsync<ArgumentNullException>(() => lockManager.GetLockOwnerAsync(
+                "", lockId, new CancellationToken()));    
         }
 
         [Theory]
-        [InlineData(null, null)]
         [InlineData("", "")]
         [InlineData(null, "")]
-        [InlineData("", null)]
         public async Task ReleaseLockRequest_ThrowsOnInvalidInput(string lockId, string ownerId)
         {
-
             Mock<IEnvironment> _environment = new Mock<IEnvironment>();
             var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
 
             var httpClient = new HttpClient(handlerMock.Object);
-            var lockClient = new KubernetesClient(_environment.Object, httpClient);
 
-            await Assert.ThrowsAsync<ArgumentNullException>(() => lockClient.ReleaseLock(lockId, ownerId));
+            var lockManager = new KubernetesDistributedLockManager(
+                new KubernetesClient(_environment.Object, httpClient), ScriptSettingsManager.Instance);
+
+            var inputLock = new KubernetesLockHandle() { LockId = lockId, Owner = ownerId };
+
+            await Assert.ThrowsAsync<ArgumentNullException>(() =>
+                   lockManager.ReleaseLockAsync(inputLock, new CancellationToken()));
         }
 
 
@@ -131,7 +185,7 @@ namespace Microsoft.Azure.WebJobs.Script.Tests
         public void GetRequestUri_UsesHttpLeaderEndpoint(string leaderEndpoint, string pathAndQueryString, string expected)
         {
             Mock<IEnvironment> _environment = new Mock<IEnvironment>();
-            _environment.Setup(p => p.GetEnvironmentVariable("HTTP_LEADER_ENDPOINT")).Returns(leaderEndpoint);
+            _environment.Setup(p => p.GetEnvironmentVariable(HttpLeaderEndpoint)).Returns(leaderEndpoint);
 
             var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
             var httpClient = new HttpClient(handlerMock.Object);

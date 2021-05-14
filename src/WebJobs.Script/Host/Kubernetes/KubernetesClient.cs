@@ -11,6 +11,7 @@ namespace Microsoft.Azure.WebJobs.Script
 {
     internal class KubernetesClient
     {
+        private const int LeaseRenewDeadline = 10;
         private readonly HttpClient _httpClient;
         private readonly string _httpLeaderEndpoint;
 
@@ -20,19 +21,21 @@ namespace Microsoft.Azure.WebJobs.Script
             _httpLeaderEndpoint = environment.GetHttpLeaderEndpoint();
         }
 
-        internal async Task<KubernetesLockHandle> GetLock(string lockName)
+        internal async Task<KubernetesLockHandle> GetLock(string lockName, CancellationToken cancellationToken)
         {
             if (string.IsNullOrEmpty(lockName))
             {
                 throw new ArgumentNullException(nameof(lockName));
             }
+
             var request = new HttpRequestMessage()
             {
                 Method = HttpMethod.Get,
                 RequestUri = GetRequestUri($"?name={lockName}")
             };
 
-            var response = await _httpClient.SendAsync(request);
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
             response.EnsureSuccessStatusCode();
 
             var responseString = await response.Content.ReadAsStringAsync();
@@ -46,16 +49,21 @@ namespace Microsoft.Azure.WebJobs.Script
                 throw new ArgumentNullException(nameof(lockId));
             }
 
+            if (string.IsNullOrEmpty(ownerId))
+            {
+                throw new ArgumentNullException(nameof(ownerId));
+            }
+
             var lockHandle = new KubernetesLockHandle();
 
             var request = new HttpRequestMessage()
             {
                 Method = HttpMethod.Post,
-                RequestUri = GetRequestUri($"/acquire?name={lockId}&owner={ownerId}&duration={lockPeriod.TotalSeconds}&renewDeadline=10"),
+                RequestUri = GetRequestUri($"/acquire?name={lockId}&owner={ownerId}&duration={lockPeriod.TotalSeconds}&renewDeadline={LeaseRenewDeadline}"),
             };
 
-            var response = await _httpClient.SendAsync(request);
-            Console.WriteLine($"K8se: TryAcquirelock response status code {response.StatusCode}");
+            var response = await _httpClient.SendAsync(request, cancellationToken);
+
             if (response.IsSuccessStatusCode)
             {
                 lockHandle.LockId = lockId;
@@ -71,10 +79,6 @@ namespace Microsoft.Azure.WebJobs.Script
                 throw new ArgumentNullException(nameof(lockId));
             }
 
-            if (string.IsNullOrEmpty(ownerId))
-            {
-                throw new ArgumentNullException(nameof(ownerId));
-            }
             var request = new HttpRequestMessage()
             {
                 Method = HttpMethod.Post,
