@@ -93,7 +93,6 @@ namespace Microsoft.Azure.WebJobs.Script.Tests
         [InlineData("", "testOwner")]
         public async Task AcquireLockRequestThrowsOnInvalidInput(string lockId, string ownerId)
         {
->>>>>>> digandhi/k8se-lock-manager
             Mock<IEnvironment> _environment = new Mock<IEnvironment>();
             var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
             var httpClient = new HttpClient(handlerMock.Object);

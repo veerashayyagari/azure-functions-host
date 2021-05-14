@@ -36,6 +36,7 @@ namespace Microsoft.Azure.WebJobs.Script
         {
             _logger.LogDebug("K8se: getlockownerasync");
             var response = await _kubernetesClient.GetLock(lockId, cancellationToken);
+            _logger.LogDebug("K8se: lock owner for {lockId} account {account} is {response.Owner}");
             return response.Owner;
         }
 
@@ -56,7 +57,7 @@ namespace Microsoft.Azure.WebJobs.Script
 
         public async Task<IDistributedLock> TryLockAsync(string account, string lockId, string lockOwnerId, string proposedLeaseId, TimeSpan lockPeriod, CancellationToken cancellationToken)
         {
-            _logger.LogDebug($"K8se: Trylockasync for {lockId} owner {lockOwnerId} for time {lockPeriod.ToString()}");
+            _logger.LogDebug($"K8se: Trylockasync for {lockId} owner {lockOwnerId} for time {lockPeriod.TotalSeconds.ToString()}");
             var ownerId = string.IsNullOrEmpty(lockOwnerId) ? _websiteInstanceId : lockOwnerId;
             var kubernetesLock = await _kubernetesClient.TryAcquireLock(lockId, ownerId, lockPeriod, cancellationToken);
             if (string.IsNullOrEmpty(kubernetesLock.LockId))
