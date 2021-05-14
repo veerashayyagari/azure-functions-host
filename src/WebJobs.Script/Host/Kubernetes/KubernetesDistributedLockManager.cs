@@ -49,10 +49,18 @@ namespace Microsoft.Azure.WebJobs.Script
 
         public async Task<bool> RenewAsync(IDistributedLock lockHandle, CancellationToken cancellationToken)
         {
-            var kubernetesLock = (KubernetesLockHandle)lockHandle;
-            _logger.LogDebug($"K8se: RenewAsync for {kubernetesLock.LockId} owner {kubernetesLock.Owner} for time {kubernetesLock.LockPeriod.ToString()}");
-            var renewedLockHandle = await _kubernetesClient.TryAcquireLock(kubernetesLock.LockId, kubernetesLock.Owner, TimeSpan.Parse(kubernetesLock.LockPeriod), cancellationToken);
-            return !string.IsNullOrEmpty(renewedLockHandle.LockId);
+            try
+            {
+                var kubernetesLock = (KubernetesLockHandle)lockHandle;
+                _logger.LogDebug($"K8se: RenewAsync for {kubernetesLock.LockId} owner {kubernetesLock.Owner} for time {kubernetesLock.LockPeriod.ToString()}");
+                var renewedLockHandle = await _kubernetesClient.TryAcquireLock(kubernetesLock.LockId, kubernetesLock.Owner, TimeSpan.Parse(kubernetesLock.LockPeriod), cancellationToken);
+                return !string.IsNullOrEmpty(renewedLockHandle.LockId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "K8se: Failed to renew lock");
+                throw ex;
+            }
         }
 
         public async Task<IDistributedLock> TryLockAsync(string account, string lockId, string lockOwnerId, string proposedLeaseId, TimeSpan lockPeriod, CancellationToken cancellationToken)
