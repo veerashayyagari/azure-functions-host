@@ -111,6 +111,7 @@ namespace Microsoft.Azure.WebJobs.Script.WebHost.Management
                     // short circuit before doing any work in background sync
                     // cases where we need to check/update hash but don't have
                     // storage access
+                    _logger.LogDebug("K8se: Short circuiting SyncTriggers calls");
                     return result;
                 }
 
@@ -131,6 +132,7 @@ namespace Microsoft.Azure.WebJobs.Script.WebHost.Management
                 {
                     newHash = await CheckHashAsync(hashBlobClient, payload.Content);
                     shouldSyncTriggers = newHash != null;
+                    _logger.LogDebug($"K8se: ShouldSyncTriggers {shouldSyncTriggers}");
                 }
 
                 if (shouldSyncTriggers)
