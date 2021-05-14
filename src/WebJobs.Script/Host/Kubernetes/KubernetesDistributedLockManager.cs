@@ -51,6 +51,7 @@ namespace Microsoft.Azure.WebJobs.Script
         {
             try
             {
+                _logger.LogDebug($"K8se: lock handle is of type: {lockHandle.GetType()}");
                 var kubernetesLock = (KubernetesLockHandle)lockHandle;
                 _logger.LogDebug($"K8se: RenewAsync for {kubernetesLock.LockId} owner {kubernetesLock.Owner} for time {kubernetesLock.LockPeriod.ToString()}");
                 var renewedLockHandle = await _kubernetesClient.TryAcquireLock(kubernetesLock.LockId, kubernetesLock.Owner, TimeSpan.Parse(kubernetesLock.LockPeriod), cancellationToken);
