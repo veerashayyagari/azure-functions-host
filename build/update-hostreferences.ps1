@@ -1,3 +1,21 @@
+
+param (
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [System.String]
+    $StorageAccountName,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [System.String]
+    $StorageAccountKey,
+
+    [Parameter(Mandatory=$true)]
+    [ValidateNotNullOrEmpty()]
+    [System.String]
+    $SourcePath
+)
+
 function WriteLog
 {
     param (
@@ -20,92 +38,90 @@ function WriteLog
     Write-Host $Message
 }
 
-WriteLog "Script started."
 
-# Make sure the project path exits
-$path = "$PSScriptRoot\..\src\WebJobs.Script"
-if (-not (Test-Path $path))
+WriteLog -Message "Script started."
+
+$CONTAINER_NAME = "functionshostbuilds"
+$FUNC_RUNTIME_VERSION = '3'
+
+if (-not (Test-Path $SourcePath))
 {
-    WriteLog "Failed to find '$path' to update package references" -Throw
+    throw "SourcePath '$SourcePath' does not exist."
 }
 
-WriteLog "Get the list of packages to update"
-$url = "https://raw.githubusercontent.com/Azure/azure-functions-integration-tests/dev/integrationTestsBuild/V3/HostBuild.json"
-
-$packagesToUpdate = Invoke-RestMethod -Uri $url -ErrorAction Stop
-if ($packagesToUpdate.Count -eq 0)
+WriteLog "Validating source path '$SourcePath'."
+$filesToUpload = @(Get-ChildItem -Path "$SourcePath/*.zip" | ForEach-Object {$_.FullName})
+if ($filesToUpload.Count -eq 0)
 {
-    WriteLog "There are no packages to update in '$url'" -Throw
+    WriteLog -Message "'$SourcePath' does not contain any zip files to upload." -Throw
 }
 
-# Update packages references
-WriteLog "Package references to update: $($packagesToUpdate.Count)"
+if (-not (Get-command New-AzStorageContext -ea SilentlyContinue))
+{
+    WriteLog "Installing Az.Storage."
+    Install-Module Az.Storage -Force -Verbose -AllowClobber -Scope CurrentUser
+}
 
-$source = "https://azfunc.pkgs.visualstudio.com/e6a70c92-4128-439f-8012-382fe78d6396/_packaging/AzureFunctionsPreRelease/nuget/v3/index.json"
-
-$currentDirectory = Get-Location
+$context = $null
 try
 {
-    set-location $path
+    WriteLog "Connecting to storage account..."
+    $context = New-AzStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $StorageAccountKey -ErrorAction Stop
+}
+catch
+{
+    $message = "Failed to authenticate with Azure. Please verify the StorageAccountName and StorageAccountKey. Exception information: $_"
+    WriteLog -Message $message -Throw
+}
 
-    foreach ($package in $packagesToUpdate)
+
+# These are the destination paths in the storage account
+# "https://<storageAccountName>.blob.core.windows.net/builds/$FUNC_RUNTIME_VERSION/latest/Azure.Functions.Cli.$os-$arch.zip"
+# "https://<storageAccountName>.blob.core.windows.net/builds/$FUNC_RUNTIME_VERSION/$version/Azure.Functions.Cli.$os-$arch.zip"
+$latestDestinationPath = "$FUNC_RUNTIME_VERSION/latest"
+$versionDestinationPath = "$FUNC_RUNTIME_VERSION/$($version)"
+
+# Delete the files in the latest folder if it is not empty
+$filesToDelete = @(Get-AzStorageBlob -Container $CONTAINER_NAME -Context $context -ErrorAction SilentlyContinue | Where-Object {$_.Name -like "*$latestDestinationPath*" })
+if ($filesToDelete.Count -gt 0)
+{
+    WriteLog -Message "Deleting files in the latest folder...."
+    $filesToDelete | ForEach-Object {
+        Remove-AzStorageBlob -Container $CONTAINER_NAME  -Context $context -Blob $_.Name -Force -ErrorAction SilentlyContinue | Out-Null
+    }
+}
+
+foreach ($path in @($latestDestinationPath, $versionDestinationPath))
+{
+    foreach ($file in $filesToUpload)
     {
-        WriteLog "Package name: $package"
+        $fileName = Split-Path $file -Leaf
+        $destinationPath = Join-Path $path $fileName
 
-        $packageInfo = & { NuGet list $package -Source $source -PreRelease }
 
-        if ($packageInfo -like "*No packages found*")
+        if ($destinationPath -like "*latest*")
         {
-            $command = "NuGet list '$($package)' -Source '$($source)' -PreRelease"
-            WriteLog "Failed to get the latest package information via: $command" -Throw
+            # Remove the Core Tools version from the path for latest
+            $destinationPath = $destinationPath.Replace("." + $version, "")
         }
 
-        WriteLog "AzureFunctionsPreRelease latest package info --> $packageInfo"
-        $packageName = $packageInfo.Split()[0]
-        $packageVersion = $packageInfo.Split()[1]
-
-        if ($package -eq "Microsoft.Azure.Functions.PythonWorker")
+        try
         {
-            # The PythonWorker is not defined in the src/WebJobs.Script/WebJobs.Script.csproj. It is defined in build/python.props.
-            # To update the package version, the xml file build/python.props needs to be updated directly.
-            $pythonPropsFilePath = "$PSScriptRoot\python.props"
+            WriteLog -Message "Uploading '$fileName' to '$destinationPath'."
 
-            if (-not (Test-Path $pythonPropsFilePath))
-            {
-                WriteLog "Python Props file '$pythonPropsFilePath' does not exist." -Throw
-            }
-
-            WriteLog "Set Python package version in '$pythonPropsFilePath' to '$packageVersion'"
-
-            # Read the xml file
-            [xml]$xml = Get-Content $pythonPropsFilePath -Raw -ErrorAction Stop
-
-            # Replace the package version
-            $xml.Project.ItemGroup.PackageReference.Version = $packageVersion
-
-            # Save the file
-            $xml.Save($pythonPropsFilePath)
-
-            if ($LASTEXITCODE -ne 0)
-            {
-                WriteLog "Failed to update Python Props file" -Throw
-            }
+            Set-AzStorageBlobContent -File $file `
+                                     -Container $CONTAINER_NAME `
+                                     -Blob $destinationPath `
+                                     -Context $context `
+                                     -StandardBlobTier Hot `
+                                     -ErrorAction Stop `
+                                     -Force | Out-Null
         }
-        else
+        catch
         {
-            WriteLog "Adding '$packageName' '$packageVersion' to project"
-            & { dotnet add package $packageName -v $packageVersion -s $source }
-
-            if ($LASTEXITCODE -ne 0)
-            {
-                WriteLog "dotnet add package $packageName -v $packageVersion -s $source failed" -Throw
-            }
+            WriteLog -Message "Failed to upload file '$file' to storage account. Exception information: $_" -Throw
         }
     }
 }
-finally
-{
-    Set-Location $currentDirectory
-}
 
-WriteLog "Script completed."
+WriteLog -Message "Script completed."
