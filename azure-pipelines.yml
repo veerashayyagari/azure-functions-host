@@ -72,6 +72,16 @@ jobs:
       SourceFolder: '$(Build.Repository.LocalPath)\buildoutput'
       Contents: '**\*.zip'
       TargetFolder: '$(Build.ArtifactStagingDirectory)'
+      
+  - task: PowerShell@2
+    condition: eq(variables['RUNBUILDFORINTEGRATIONTESTS'], 'True')
+    displayName: "Push host zip to storage"
+    inputs:
+      filePath: '$(Build.Repository.LocalPath)\build\uploadHostToStorage.ps1'
+      arguments: '-StorageAccountName "$(IntegrationTestsStorageName)" -StorageAccountKey "$(IntegrationTestsStorageKey)" -SourcePath "(Build.ArtifactStagingDirectory)" '
+
+  - task: DotNetCoreCLI@2
+    displayName: 'Build performance package'
   - task: DotNetCoreCLI@2
     displayName: 'Build host packages'
     inputs:
