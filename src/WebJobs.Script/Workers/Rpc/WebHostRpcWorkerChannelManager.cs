@@ -110,7 +110,10 @@ namespace Microsoft.Azure.WebJobs.Script.Workers.Rpc
             _logger.LogInformation("Starting language worker channel specialization");
             _workerRuntime = _environment.GetEnvironmentVariable(RpcWorkerConstants.FunctionWorkerRuntimeSettingName);
 
+            _logger.LogCritical("Worker runtime: {0}", _workerRuntime);
+
             IRpcWorkerChannel rpcWorkerChannel = await GetChannelAsync(_workerRuntime);
+            _logger.LogCritical("rpcWorkerChannel: {0}", rpcWorkerChannel);
 
             if (_workerRuntime != null && rpcWorkerChannel != null)
             {
