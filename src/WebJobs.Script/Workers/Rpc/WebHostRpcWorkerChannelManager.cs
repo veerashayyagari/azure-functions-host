@@ -145,10 +145,18 @@ namespace Microsoft.Azure.WebJobs.Script.Workers.Rpc
                 // Also cannot use placeholder worker that is targeting ~3 but has backwards compatibility with V2 enabled
                 // TODO: Remove special casing when resolving https://github.com/Azure/azure-functions-host/issues/4534
                 if (string.Equals(workerRuntime, RpcWorkerConstants.NodeLanguageWorkerName, StringComparison.OrdinalIgnoreCase)
-                    || string.Equals(workerRuntime, RpcWorkerConstants.PowerShellLanguageWorkerName, StringComparison.OrdinalIgnoreCase))
+                    || string.Equals(workerRuntime, RpcWorkerConstants.PowerShellLanguageWorkerName, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(workerRuntime, RpcWorkerConstants.PythonLanguageWorkerName, StringComparison.OrdinalIgnoreCase))
                 {
+                    _logger.LogCritical("Worker type is {0}", workerRuntime);
+                    _logger.LogCritical("IsFileSystemReadOnly: {0}", _applicationHostOptions.CurrentValue.IsFileSystemReadOnly);
+                    _logger.LogCritical("!IsV2CompatibileOnV3Extension: {0}", !_environment.IsV2CompatibileOnV3Extension());
+
                     // Use if readonly and not v2 compatible on ~3 extension
-                    return _applicationHostOptions.CurrentValue.IsFileSystemReadOnly && !_environment.IsV2CompatibileOnV3Extension();
+                    bool ret = _applicationHostOptions.CurrentValue.IsFileSystemReadOnly && !_environment.IsV2CompatibileOnV3Extension();
+                    _logger.LogCritical("Using placeholder channel: {0}", ret);
+
+                    return ret;
                 }
                 return true;
             }
