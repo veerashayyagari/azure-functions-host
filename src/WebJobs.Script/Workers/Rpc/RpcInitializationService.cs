@@ -133,6 +133,14 @@ namespace Microsoft.Azure.WebJobs.Script.Workers.Rpc
         internal Task InitializeChannelsAsync()
         {
             // TODO: Remove special casing when resolving https://github.com/Azure/azure-functions-host/issues/4534
+            _logger.LogCritical("ShouldStartAsPlaceholderPool: {0}", ShouldStartAsPlaceholderPool());
+            _logger.LogCritical("ShouldStartStandbyPlaceholderChannels: {0}", ShouldStartStandbyPlaceholderChannels());
+
+            _logger.LogCritical("IsLinuxAzureManagedHosting {0}", _environment.IsLinuxAzureManagedHosting());
+            _logger.LogCritical("IsLinuxConsumption {0}", _environment.IsLinuxConsumption());
+            _logger.LogCritical("IsAppService {0}", _environment.IsAppService());
+            _logger.LogCritical("ContainerName {0}", _environment.GetEnvironmentVariable("CONTAINER_NAME"));
+
             if (ShouldStartAsPlaceholderPool())
             {
                 return _webHostRpcWorkerChannelManager.InitializeChannelAsync(_workerRuntime);
@@ -147,8 +155,10 @@ namespace Microsoft.Azure.WebJobs.Script.Workers.Rpc
 
         private Task InitializePlaceholderChannelsAsync()
         {
+            _logger.LogCritical("In InitializePlaceholderChannelsAsync()");
             if (_environment.IsLinuxAzureManagedHosting())
             {
+                _logger.LogCritical("Starting placeholder channels for Linux");
                 return InitializePlaceholderChannelsAsync(OSPlatform.Linux);
             }
 
@@ -187,6 +197,9 @@ namespace Microsoft.Azure.WebJobs.Script.Workers.Rpc
 
         internal bool ShouldStartAsPlaceholderPool()
         {
+            _logger.LogCritical("IsPlaceholderModeEnabled {0}", _environment.IsPlaceholderModeEnabled());
+            _logger.LogCritical("worker runtime: {0}", _workerRuntime);
+
             // We are in placeholder mode but a worker runtime IS set
             return _environment.IsPlaceholderModeEnabled()
                 && !string.IsNullOrEmpty(_workerRuntime)
