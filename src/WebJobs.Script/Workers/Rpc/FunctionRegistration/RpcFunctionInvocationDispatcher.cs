@@ -187,12 +187,15 @@ namespace Microsoft.Azure.WebJobs.Script.Workers.Rpc
         {
             cancellationToken.ThrowIfCancellationRequested();
 
+            _logger.LogCritical("InitializeAsync#IsPlaceholderModeEnabled: {0}", _environment.IsPlaceholderModeEnabled());
             if (_environment.IsPlaceholderModeEnabled())
             {
                 return;
             }
 
             _workerRuntime = _workerRuntime ?? Utility.GetWorkerRuntime(functions);
+            _logger.LogCritical("InitializeAsync#_workerRuntime: {0}", _workerRuntime);
+
             _functions = functions;
             if (string.IsNullOrEmpty(_workerRuntime) || _workerRuntime.Equals(RpcWorkerConstants.DotNetLanguageWorkerName, StringComparison.InvariantCultureIgnoreCase))
             {
@@ -203,6 +206,7 @@ namespace Microsoft.Azure.WebJobs.Script.Workers.Rpc
                 return;
             }
 
+            _logger.LogCritical("InitializeAsync#functions.Count: {0}", functions.Count());
             if (functions == null || functions.Count() == 0)
             {
                 // do not initialize function dispatcher if there are no functions
