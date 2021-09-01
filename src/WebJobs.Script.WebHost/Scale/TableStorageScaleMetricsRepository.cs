@@ -262,12 +262,12 @@ namespace Microsoft.Azure.WebJobs.Script.WebHost
 
             foreach (var sample in metrics)
             {
-                var operation = CreateMetricsInsertOperation(sample, hostId, monitor.Descriptor, now);
+                var operation = CreateMetricsInsertOperation(sample, hostId, monitor.Descriptor, _logger, now);
                 batch.Add(operation);
             }
         }
 
-        internal static TableOperation CreateMetricsInsertOperation(ScaleMetrics metrics, string hostId, ScaleMonitorDescriptor descriptor, DateTime? now = null)
+        internal static TableOperation CreateMetricsInsertOperation(ScaleMetrics metrics, string hostId, ScaleMonitorDescriptor descriptor, ILogger logger = null, DateTime? now = null)
         {
             now = now ?? DateTime.UtcNow;
 
@@ -282,6 +282,10 @@ namespace Microsoft.Azure.WebJobs.Script.WebHost
             // We want to ensure that timestamp values for returned metrics are precise and monotonically
             // increasing when ordered results are returned. The built in timestamp doesn't guarantee this.
             entity.Properties.Add(SampleTimestampPropertyName, EntityProperty.GeneratePropertyForDateTimeOffset(metrics.Timestamp));
+
+            string propertyNames = string.Join('\n', entity.Properties.Keys);
+            int numProperties = entity.Properties.Keys.Count;
+            logger.LogInformation($"Writing an entry with {numProperties} properties:\n{propertyNames}");
 
             return TableOperation.Insert(entity);
         }
