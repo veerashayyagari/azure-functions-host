@@ -1,17 +1,19 @@
-﻿{
-    "bindings": [
-        {
-            "type": "httpTrigger",
-            "authLevel": "anonymous",
-            "name": "req",
-            "direction": "in",
-            "methods": [ "get", "post" ],
-            "route": "{x:regex(^(warmup|csharphttpwarmup)$)}"
-        },
-        {
-            "type": "http",
-            "name": "$return",
-            "direction": "out"
-        }
-    ]
+{
+  "generatedBy": "Microsoft.NET.Sdk.Functions.Generator-4.0.0",
+  "configurationSource": "attributes",
+  "bindings": [
+    {
+      "type": "httpTrigger",
+      "route": "{x:regex(^(warmup|csharphttpwarmup)$)}",
+      "methods": [
+        "get",
+        "post"
+      ],
+      "authLevel": "anonymous",
+      "name": "req"
+    }
+  ],
+  "disabled": false,
+  "scriptFile": "../bin/WarmUp.dll",
+  "entryPoint": "WarmUp.WarmUp.Run"
 }

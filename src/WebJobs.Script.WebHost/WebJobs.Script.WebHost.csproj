@@ -82,7 +82,9 @@
     <EmbeddedResource Include="Resources\app_offline.htm" />
     <EmbeddedResource Include="Resources\Functions\host.json" />
     <EmbeddedResource Include="Resources\Functions\WarmUp\function.json" />
-    <EmbeddedResource Include="Resources\Functions\WarmUp\run.csx" />
+    <EmbeddedResource Include="Resources\Functions\bin\*.json" />
+    <EmbeddedResource Include="Resources\Functions\bin\*.dll" />
+    <EmbeddedResource Include="Resources\Functions\bin\*.pdb" />
   </ItemGroup>
 
   <ItemGroup>

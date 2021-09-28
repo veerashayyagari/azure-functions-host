@@ -4,6 +4,7 @@
 using System;
 using System.IO;
 using System.Reactive.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
@@ -205,8 +206,33 @@ namespace Microsoft.Azure.WebJobs.Script.WebHost
             Directory.CreateDirectory(functionPath);
             content = FileUtility.ReadResourceString($"{ScriptConstants.ResourcePath}.Functions.{WarmUpConstants.FunctionName}.function.json");
             File.WriteAllText(Path.Combine(functionPath, "function.json"), content);
-            content = FileUtility.ReadResourceString($"{ScriptConstants.ResourcePath}.Functions.{WarmUpConstants.FunctionName}.run.csx");
-            File.WriteAllText(Path.Combine(functionPath, "run.csx"), content);
+
+            string binPath = Path.Combine(scriptPath, WarmUpConstants.BinName);
+            Directory.CreateDirectory(binPath);
+            string prefix = $"{ScriptConstants.ResourcePath}.Functions.{WarmUpConstants.BinName}.";
+            var resources = Assembly.GetExecutingAssembly().GetManifestResourceNames();
+            foreach (var resource in resources)
+            {
+                if (resource.StartsWith(prefix))
+                {
+                    string destPath = Path.Combine(binPath, resource.Split(prefix)[1]);
+
+                    if (resource.EndsWith(".json"))
+                    {
+                        content = FileUtility.ReadResourceString(resource);
+                        File.WriteAllText(Path.Combine(binPath, destPath), content);
+                        continue;
+                    }
+
+                    byte[] buffer;
+                    using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resource))
+                    {
+                        buffer = new byte[stream.Length];
+                        stream.Read(buffer, 0, buffer.Length);
+                        File.WriteAllBytes(Path.Combine(binPath, destPath), buffer);
+                    }
+                }
+            }
 
             _logger.LogInformation($"StandbyMode placeholder function directory created");
         }
