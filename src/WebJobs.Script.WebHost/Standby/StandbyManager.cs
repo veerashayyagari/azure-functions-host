@@ -210,7 +210,6 @@ namespace Microsoft.Azure.WebJobs.Script.WebHost
             string binPath = Path.Combine(scriptPath, WarmUpConstants.BinName);
             Directory.CreateDirectory(binPath);
             string prefix = $"{ScriptConstants.ResourcePath}.Functions.{WarmUpConstants.BinName}.";
-            var assembly = Assembly.GetExecutingAssembly();
             var resources = Assembly.GetExecutingAssembly().GetManifestResourceNames();
             foreach (var resource in resources)
             {
