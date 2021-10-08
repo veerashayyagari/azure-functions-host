@@ -1,4 +1,5 @@
 bin
+!src/WebJobs.Script.WebHost/Resources/Functions/bin
 obj
 csx
 .vs

@@ -28,7 +28,7 @@ namespace Microsoft.Azure.WebJobs.Script
 
         public static bool IsPlaceholderModeEnabled(this IEnvironment environment)
         {
-            return environment.GetEnvironmentVariable(AzureWebsitePlaceholderMode) == "1";
+            return true;
         }
 
         public static bool IsLegacyPlaceholderTemplateSite(this IEnvironment environment)
