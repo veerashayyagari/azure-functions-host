@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.31717.71
 MinimumVisualStudioVersion = 15.0.0.0
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{16351B76-87CA-4A8C-80A1-3DD83A0C4AA6}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sample", "sample", "{FF9C0818-30D3-437A-A62D-7A61CA44F459}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "schemas", "schemas", "{67174433-2838-460C-9880-419476D02994}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "json", "json", "{3A4AF861-66F2-4C34-BB9E-69F0D392BB1A}"
@@ -55,6 +57,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmarks", "benchmarks", 
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Azure.WebJobs.Script.Benchmarks", "benchmarks\WebJobs.Script.Benchmarks\Microsoft.Azure.WebJobs.Script.Benchmarks.csproj", "{766DE3D5-4FB1-4602-9BB5-3779EECC232D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CustomHandlerRetry", "CustomHandlerRetry", "{C7A83CE2-67D5-470D-9777-320E2D814DC0}"
+	ProjectSection(SolutionItems) = preProject
+		sample\CustomHandlerRetry\host.json = sample\CustomHandlerRetry\host.json
+		sample\CustomHandlerRetry\server.js = sample\CustomHandlerRetry\server.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "HttpTrigger", "HttpTrigger", "{C4849B2D-031E-441E-8F67-52E462BB8C71}"
+	ProjectSection(SolutionItems) = preProject
+		sample\CustomHandlerRetry\HttpTrigger\function.json = sample\CustomHandlerRetry\HttpTrigger\function.json
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
@@ -116,6 +129,8 @@ Global
 		{5C308A72-5CF3-45E8-B64F-2C98F567054A} = {AFB0F5F7-A612-4F4A-94DD-8B69CABF7970}
 		{9A522D9D-2D86-4572-B7D1-ECBFBFAF312C} = {16351B76-87CA-4A8C-80A1-3DD83A0C4AA6}
 		{766DE3D5-4FB1-4602-9BB5-3779EECC232D} = {D5F77934-E468-4EE7-82F8-3B8149591174}
+		{C7A83CE2-67D5-470D-9777-320E2D814DC0} = {FF9C0818-30D3-437A-A62D-7A61CA44F459}
+		{C4849B2D-031E-441E-8F67-52E462BB8C71} = {C7A83CE2-67D5-470D-9777-320E2D814DC0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {85400884-5FFD-4C27-A571-58CB3C8CAAC5}

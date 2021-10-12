@@ -21,7 +21,7 @@ tools/ExtensionsMetadataGenerator/packages
 TestResults/
 
 /tools/NuGet.exe
-/node_modules
+node_modules
 /.output
 /buildoutput
 /tools/ExtensionsMetadataGenerator/src/ExtensionsMetadataGenerator/runtimeassemblies.txt
@@ -29,4 +29,5 @@ TestResults/
 
 local.settings.json
 msbuild.binlog
+/.github/notebooks/sprint.github-issues
 BenchmarkDotNet.Artifacts/
