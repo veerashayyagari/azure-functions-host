@@ -382,11 +382,11 @@ namespace Microsoft.Azure.WebJobs.Script
             if (workerIndexing)
             {
                 _logger.LogInformation("Worker indexing is enabled");
-                functionMetadata = _functionMetadataManager.GetFunctionMetadata(forceRefresh: true, dispatcher: _functionDispatcher);
+                functionMetadata = _functionMetadataManager.GetFunctionMetadata(forceRefresh: false, dispatcher: _functionDispatcher);
             }
             else
             {
-                functionMetadata = _functionMetadataManager.GetFunctionMetadata(true);
+                functionMetadata = _functionMetadataManager.GetFunctionMetadata(false);
                 _workerRuntime = _workerRuntime ?? Utility.GetWorkerRuntime(functionMetadata);
             }
             foreach (var error in _functionMetadataManager.Errors)
