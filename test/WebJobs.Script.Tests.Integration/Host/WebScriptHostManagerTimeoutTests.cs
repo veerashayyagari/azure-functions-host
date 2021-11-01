@@ -59,6 +59,14 @@ namespace Microsoft.Azure.WebJobs.Script.Tests.Host
         [Fact]
         public async Task OnTimeoutException_OOP_HasExpectedLogs()
         {
+            var settings = new Dictionary<string, string>()
+            {
+                { EnvironmentSettingNames.AzureWebsitePlaceholderMode, "1" },
+                { EnvironmentSettingNames.AzureWebsiteContainerReady, null },
+             };
+            var _environment = new TestEnvironment(settings);
+            _environment.SetEnvironmentVariable(EnvironmentSettingNames.FunctionWorkerRuntime, "dotnet");
+
             using (var host = await RunTimeoutExceptionTest(handleCancellation: false, timeoutFunctionName: "TimeoutSync", path: @"TestScripts\Node"))
             {
                 var jobHostManager = host.WebHostServices.GetService<IScriptHostManager>();
