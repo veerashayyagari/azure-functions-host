@@ -36,6 +36,15 @@ namespace Microsoft.Azure.WebJobs.Script.Tests.ApplicationInsights
         [Fact]
         public async Task Validate_Manual()
         {
+            var settings = new Dictionary<string, string>()
+            {
+                { EnvironmentSettingNames.AzureWebsitePlaceholderMode, "1" },
+                { EnvironmentSettingNames.AzureWebsiteContainerReady, null },
+             };
+
+            var _environment = new TestEnvironment(settings);
+            _environment.SetEnvironmentVariable(EnvironmentSettingNames.FunctionWorkerRuntime, "node");
+
             string functionName = "Scenarios";
             int invocationCount = 5;
 
@@ -99,6 +108,15 @@ namespace Microsoft.Azure.WebJobs.Script.Tests.ApplicationInsights
 
         private async Task RunHttpTest(string functionName, string scenario, HttpStatusCode expectedStatusCode, bool functionSuccess)
         {
+            var settings = new Dictionary<string, string>()
+            {
+                { EnvironmentSettingNames.AzureWebsitePlaceholderMode, "1" },
+                { EnvironmentSettingNames.AzureWebsiteContainerReady, null },
+             };
+
+            var _environment = new TestEnvironment(settings);
+            _environment.SetEnvironmentVariable(EnvironmentSettingNames.FunctionWorkerRuntime, "node");
+
             HttpRequestMessage request = new HttpRequestMessage
             {
                 RequestUri = new Uri($"https://localhost/api/{functionName}"),
