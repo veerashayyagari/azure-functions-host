@@ -81,7 +81,6 @@ namespace Microsoft.Azure.WebJobs.Script.Workers.Rpc
             _logger = loggerFactory.CreateLogger<RpcFunctionInvocationDispatcher>();
             _rpcWorkerChannelFactory = rpcWorkerChannelFactory;
             _workerRuntime = _environment.GetEnvironmentVariable(RpcWorkerConstants.FunctionWorkerRuntimeSettingName);
-            _workerRuntime = "node";
             _functionDispatcherLoadBalancer = functionDispatcherLoadBalancer;
             _workerConcurrencyOptions = workerConcurrencyOptions;
             _workerIndexing = Utility.CanWorkerIndex(_workerConfigs, _environment);
