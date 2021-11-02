@@ -240,7 +240,7 @@ namespace Microsoft.Azure.WebJobs.Script.Tests.ApplicationInsights
             // slightly out-of-order or on different threads
             TraceTelemetry[] traces = null;
             string routesManagerLogCategory = typeof(WebHost.WebScriptHostHttpRoutesManager).FullName;
-            Environment.SetEnvironmentVariable(EnvironmentSettingNames.FunctionWorkerRuntime, "");
+            Environment.SetEnvironmentVariable(EnvironmentSettingNames.FunctionWorkerRuntime, "dotnet");
 
             await TestHelpers.Await(() =>
             {
