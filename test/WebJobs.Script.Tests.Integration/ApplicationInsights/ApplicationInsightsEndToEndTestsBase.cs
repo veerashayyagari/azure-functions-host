@@ -240,6 +240,7 @@ namespace Microsoft.Azure.WebJobs.Script.Tests.ApplicationInsights
             // slightly out-of-order or on different threads
             TraceTelemetry[] traces = null;
             string routesManagerLogCategory = typeof(WebHost.WebScriptHostHttpRoutesManager).FullName;
+            Environment.SetEnvironmentVariable(EnvironmentSettingNames.FunctionWorkerRuntime, "");
 
             await TestHelpers.Await(() =>
             {
@@ -286,6 +287,8 @@ namespace Microsoft.Azure.WebJobs.Script.Tests.ApplicationInsights
             ValidateTrace(traces[idx++], "Job host started", LogCategories.Startup);
             ValidateTrace(traces[idx++], "Loading functions metadata", LogCategories.Startup);
             ValidateTrace(traces[idx++], "Starting Host (HostId=", LogCategories.Startup);
+
+            Environment.SetEnvironmentVariable(EnvironmentSettingNames.FunctionWorkerRuntime, "node");
         }
 
         [Fact]
