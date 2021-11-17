@@ -176,6 +176,12 @@ namespace Microsoft.Azure.WebJobs.Script.WebHost.Diagnostics.Extensions
                 new EventId(528, nameof(ExecutedHttpRequest)),
                 Properties.Resources.ExecutedHttpRequest);
 
+        private static readonly Action<ILogger, ScriptHostState, Exception> _hostStateChanged =
+            LoggerMessage.Define<ScriptHostState>(
+                LogLevel.Trace,
+                new EventId(529, nameof(HostStateChanged)),
+                "Host state changed: {state}.");
+
         public static void ExecutingHttpRequest(this ILogger logger, string mS_ActivityId, string httpMethod, string userAgent, string uri)
         {
             _executingHttpRequest(logger, mS_ActivityId, httpMethod, userAgent, uri, null);
@@ -309,6 +315,11 @@ namespace Microsoft.Azure.WebJobs.Script.WebHost.Diagnostics.Extensions
         public static void ScriptHostServiceRestartCanceledByRuntime(this ILogger logger)
         {
             _scriptHostServiceRestartCanceledByRuntime(logger, null);
+        }
+
+        public static void HostStateChanged(this ILogger logger, ScriptHostState state)
+        {
+            _hostStateChanged(logger, state, null);
         }
     }
 }
