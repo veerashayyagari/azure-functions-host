@@ -130,18 +130,7 @@ namespace Microsoft.Azure.WebJobs.Script.WebHost
 
         public IServiceProvider Services => ActiveHost?.Services;
 
-        public ScriptHostState State
-        {
-            get
-            {
-                return State;
-            }
-
-            private set
-            {
-                _logger?.HostStateChanged(State);
-            }
-        }
+        public ScriptHostState State { get; private set; }
 
         public Exception LastError { get; private set; }
 
