@@ -28,7 +28,7 @@ namespace Microsoft.Azure.WebJobs.Script.Description
         private static readonly ConcurrentDictionary<string, int> _sharedContextAssembliesInFallbackLoad = new ConcurrentDictionary<string, int>();
         private static readonly RuntimeAssembliesInfo _runtimeAssembliesInfo = new RuntimeAssembliesInfo();
 
-        private static Lazy<FunctionAssemblyLoadContext> _defaultContext = new (() => CreateSharedContext(ResolveFunctionBaseProbingPath()), true);
+        private static Lazy<FunctionAssemblyLoadContext> _defaultContext = new Lazy<FunctionAssemblyLoadContext>(() => CreateSharedContext(ResolveFunctionBaseProbingPath()), true);
 
         private readonly List<string> _probingPaths = new List<string>();
         private readonly IDictionary<string, RuntimeAsset[]> _depsAssemblies;
