@@ -2,7 +2,7 @@
   <Import Project=".\package.props" />
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <LangVersion>latest</LangVersion>
+    <LangVersion>8.0</LangVersion>
     <MajorVersion>4</MajorVersion>
     <MinorVersion>1</MinorVersion>
     <PatchVersion>1</PatchVersion>
