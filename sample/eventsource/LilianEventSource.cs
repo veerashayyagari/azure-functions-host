@@ -2,6 +2,7 @@ using System.Diagnostics.Tracing;
 
 namespace eventsource
 {
+  [EventSource(Name = "LilianKasemsSuperUniqueID")]
   public class LilianEventSource : EventSource
   {
       public static LilianEventSource Log = new LilianEventSource();
