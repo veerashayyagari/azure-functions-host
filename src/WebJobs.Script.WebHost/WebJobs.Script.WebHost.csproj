@@ -113,6 +113,7 @@
   
   <ItemGroup>
     <ProjectReference Include="..\WebJobs.Script.Grpc\WebJobs.Script.Grpc.csproj" />
+    <ProjectReference Include="..\..\sample\eventsource\eventsource.csproj" />
   </ItemGroup>
 
   <ItemGroup>
