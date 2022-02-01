@@ -1,9 +1,9 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
-
 using System;
 using System.Linq;
 using System.Threading;
+using eventsource;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Azure.WebJobs.Script.WebHost.Configuration;
@@ -23,6 +23,8 @@ namespace Microsoft.Azure.WebJobs.Script.WebHost
         public static void Main(string[] args)
         {
             InitializeProcess();
+
+            LilianEventSource.Log.Startup();
 
             var host = BuildWebHost(args);
 

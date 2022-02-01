@@ -12,7 +12,7 @@
       // If you have changed target frameworks, make sure to update the program path.
       "program": "${workspaceFolder}/src/WebJobs.Script.WebHost/bin/Debug/netcoreapp3.1/Microsoft.Azure.WebJobs.Script.WebHost.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/sample/Node",
+      "cwd": "${workspaceFolder}/sample/eventsourcefunction/bin/Debug/netcoreapp3.1",
       "stopAtEntry": false,
       // Enable launching a web browser when ASP.NET Core starts. For more information: https://aka.ms/VSCode-CS-LaunchJson-WebBrowser
       "serverReadyAction": {

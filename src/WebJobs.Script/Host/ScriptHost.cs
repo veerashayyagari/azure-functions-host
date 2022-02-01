@@ -36,7 +36,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using FunctionMetadata = Microsoft.Azure.WebJobs.Script.Description.FunctionMetadata;
-using eventsource;
 
 namespace Microsoft.Azure.WebJobs.Script
 {
@@ -263,8 +262,6 @@ namespace Microsoft.Azure.WebJobs.Script
 
             _ = LogInitializationAsync();
 
-            LilianEventSource.Log.Startup();
-
             await InitializeAsync(cancellationToken);
 
             // Throw if cancellation occurred during initialization.
@@ -434,7 +431,6 @@ namespace Microsoft.Azure.WebJobs.Script
 
         internal void Shutdown()
         {
-            LilianEventSource.Log.Shutdown();
             _applicationLifetime.StopApplication();
         }
 
