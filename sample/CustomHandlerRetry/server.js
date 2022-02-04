@@ -1,37 +1,37 @@
-// const express = require('express');
-// const bodyParser = require('body-parser');
-// const fs = require('fs')
+ const express = require('express');
+ const bodyparser = require('body-parser');
+ const fs = require('fs')
 
-// const app = express();
-// const port = process.env.FUNCTIONS_HTTPWORKER_PORT || 5000;
+ const app = express();
+ const port = process.env.functions_httpworker_port || 5000;
 
-// fs.writeFile('C:\\Users\\magordon\\Repos\\azure-functions-host\\sample\\CustomHandlerRetry\\serveroutput.txt', port, err => {})
+ fs.writefile('c:\\users\\magordon\\repos\\azure-functions-host\\sample\\customhandlerretry\\serveroutput.txt', port, err => {})
 
 
-// app.use(bodyParser.json()) // for parsing application/json
+ app.use(bodyparser.json()) // for parsing application/json
 
-// // app.post('/api/httptrigger', (req, res) => {
-// //     let retryCount = req?.body?.Metadata?.RetryContext?.RetryCount || 0;
-// //     let maxRetry = req?.body?.Metadata?.RetryContext?.MaxRetryCount;
-// //     let exception = req?.body?.Metadata?.RetryContext?.Exception?.message || '';
-// //     let errorString = 'An error occurred';
-// //     let json = JSON.stringify({ functionName: req.url.replace("/", ""), retryCount, maxRetry });
-// //     res.send(json);
-// // })
+ // app.post('/api/httptrigger', (req, res) => {
+ //     let retrycount = req?.body?.metadata?.retrycontext?.retrycount || 0;
+ //     let maxretry = req?.body?.metadata?.retrycontext?.maxretrycount;
+ //     let exception = req?.body?.metadata?.retrycontext?.exception?.message || '';
+ //     let errorstring = 'an error occurred';
+ //     let json = json.stringify({ functionname: req.url.replace("/", ""), retrycount, maxretry });
+ //     res.send(json);
+ // })
 
-// app.get('/api/httptrigger', (req, res) => {
-//     res.status(200).send();
-// })
+ app.get('/api/httptrigger', (req, res) => {
+     res.status(200).send();
+ })
 
-// try {
-//     app.listen(port, () => {
-//         console.log(`Example app listening at http://localhost:${port}`);
-//        // fs.writeFile('C:\\Users\\magordon\\Repos\\azure-functions-host\\sample\\CustomHandlerRetry\\serveroutput.txt', ${port}, err => {})
+ try {
+     app.listen(port, () => {
+         console.log(`example app listening at http://localhost:${port}`);
+        // fs.writefile('c:\\users\\magordon\\repos\\azure-functions-host\\sample\\customhandlerretry\\serveroutput.txt', ${port}, err => {})
 
-//     })
-// } catch (e) {
-//     fs.writeFile('C:\\Users\\magordon\\Repos\\azure-functions-host\\sample\\CustomHandlerRetry\\serveroutput.txt', e, err => {})
-// }
+     })
+ } catch (e) {
+     fs.writefile('c:\\users\\magordon\\repos\\azure-functions-host\\sample\\customhandlerretry\\serveroutput.txt', e, err => {})
+ }
 
 var http = require('http');
 const url = require('url');
