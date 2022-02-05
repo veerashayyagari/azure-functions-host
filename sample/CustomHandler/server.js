@@ -35,9 +35,21 @@ app.use(express.json())
 
 app.post('/api/HttpTrigger', (req, res) => {
   console.log(req.body)
-  res.send(req.body)
+  res.send("api")
 })
 
+count = 0;
+app.post('/HttpTrigger', (req, res) => {
+  count = count + 1
+  res.status(500).send(x)
+})
+
+var x = {
+  "returnValue": count,
+  "outputs" : {
+    "key1" : "value"
+  }
+}
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
