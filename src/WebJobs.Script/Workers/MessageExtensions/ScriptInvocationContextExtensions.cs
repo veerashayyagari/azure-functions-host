@@ -81,11 +81,17 @@ namespace Microsoft.Azure.WebJobs.Script.Workers
             return JsonConvert.SerializeObject(inputValue);
         }
 
-        internal static void SetRetryContext(this ScriptInvocationContext scriptInvocationContext, HttpScriptInvocationContext httpScriptInvocationContext)
+        internal static void SetRetryContext(ScriptInvocationContext scriptInvocationContext, HttpScriptInvocationContext httpScriptInvocationContext)
         {
             if (scriptInvocationContext.ExecutionContext.RetryContext != null)
             {
-                httpScriptInvocationContext.Metadata["RetryContext"] = scriptInvocationContext.ExecutionContext.RetryContext;
+                var retryContext = scriptInvocationContext.ExecutionContext.RetryContext;
+                httpScriptInvocationContext.Metadata["RetryContext"] = new RetryContext()
+                {
+                    MaxRetryCount = retryContext.MaxRetryCount,
+                    RetryCount = retryContext.RetryCount,
+                    Exception = retryContext.Exception
+                };
             }
         }
     }
