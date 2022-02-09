@@ -29,17 +29,18 @@ namespace Microsoft.Azure.WebJobs.Script.Tests.Integration.WebHostEndToEnd
         public async Task CustomHandlerRetry_Get_Succeeds()
         {
             var response = await InvokeHttpTriggerCustomHandlerRetry("HttpTrigger");
+            //var response = await SamplesTestHelpers.InvokeHttpTrigger(_fixture, "HttpTrigger");
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             string body = await response.Content.ReadAsStringAsync();
             JObject res = JObject.Parse(body);
             Assert.True(res["functionName"].ToString().StartsWith($"api/HttpTrigger"));
-            Assert.Equal(res["retryCount"], "4");
+            Assert.Equal(res["retryCount"], "2");
         }
 
         public class TestFixture : EndToEndTestFixture
         {
             public TestFixture()
-                : base(Path.Combine(Environment.CurrentDirectory,"..", "..", "..", "..", "..","sample","CustomHandlerRetry"), "samples", RpcWorkerConstants.NodeLanguageWorkerName)
+                :    base(Path.Combine(Environment.CurrentDirectory,"..", "..", "..", "..", "..","sample","CustomHandlerRetry"), "samples", RpcWorkerConstants.NodeLanguageWorkerName)
             {
             }
 
@@ -54,9 +55,6 @@ namespace Microsoft.Azure.WebJobs.Script.Tests.Integration.WebHostEndToEnd
             string uri = $"api/{functionName}";
             HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, uri);
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/plain"));
-            request.Content = new StringContent("{\n  \"Data\": {\n    \"myQueueItem\": \"{ message: \\\"Message sent\\\" }\"\n  },\n  \"Metadata\": {\n    " +
-                "\"RetryContext\": {\n        \"RetryCount\": \"4\",\n        \"Exception\" : {\n            \"message\":\"An error occurred\"\n        } , \n        " +
-                "\"MaxRetryCount\": \"4\"\n    }\n  }\n}", Encoding.UTF8, "application/json");
             return await _fixture.Host.HttpClient.SendAsync(request);
         }
     }

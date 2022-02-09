@@ -5,6 +5,5 @@
     "dependencies": {
         "express": "5.0.0-alpha.8",
         "body-parser": "1.19.0"
-        "fs": "^0.0.1-security"
     }
 }

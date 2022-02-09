@@ -1,47 +1,51 @@
- const express = require('express');
- const bodyparser = require('body-parser');
- const fs = require('fs')
-
- const app = express();
- const port = process.env.functions_httpworker_port || 5000;
-
- fs.writefile('c:\\users\\magordon\\repos\\azure-functions-host\\sample\\customhandlerretry\\serveroutput.txt', port, err => {})
+const express = require('express')
+const app = express()
+const port = process.env.functions_httpworker_port || 5001
 
 
- app.use(bodyparser.json()) // for parsing application/json
+// app.get('/', (req, res) => {
+//   res.send('Hello World!')
+// })
 
- // app.post('/api/httptrigger', (req, res) => {
- //     let retrycount = req?.body?.metadata?.retrycontext?.retrycount || 0;
- //     let maxretry = req?.body?.metadata?.retrycontext?.maxretrycount;
- //     let exception = req?.body?.metadata?.retrycontext?.exception?.message || '';
- //     let errorstring = 'an error occurred';
- //     let json = json.stringify({ functionname: req.url.replace("/", ""), retrycount, maxretry });
- //     res.send(json);
- // })
+// app.post('/api/HttpTrigger', (req, res) => {
+//   res.send('Hello World!')
+// })
 
- app.get('/api/httptrigger', (req, res) => {
-     res.status(200).send();
- })
+app.use(
+  express.urlencoded({
+    extended: true
+  })
+)
 
- try {
-     app.listen(port, () => {
-         console.log(`example app listening at http://localhost:${port}`);
-        // fs.writefile('c:\\users\\magordon\\repos\\azure-functions-host\\sample\\customhandlerretry\\serveroutput.txt', ${port}, err => {})
+app.use(express.json())
 
-     })
- } catch (e) {
-     fs.writefile('c:\\users\\magordon\\repos\\azure-functions-host\\sample\\customhandlerretry\\serveroutput.txt', e, err => {})
- }
+app.post('/api/HttpTrigger', (req, res) => {
+  console.log(req.body)
+  res.send("enable http forwarding is true")
+})
 
-var http = require('http');
-const url = require('url');
-const port = process.env.FUNCTIONS_HTTPWORKER_PORT;
-console.log("port" + port);
-//create a server object:
-http.createServer(function (req, res) {
-  const reqUrl = url.parse(req.url, true);
-  console.log("Request handler random was called.");
-  res.writeHead(200, {"Content-Type": "application/json"});
-  var json = JSON.stringify({ functionName : req.url.replace("/","")});
-  res.end(json);
-}).listen(port); 
+
+app.get('/HttpTrigger', (req, res) => {
+  let retryCount = req?.body?.Metadata?.RetryContext?.RetryCount || 0;
+  let maxRetry = req?.body?.Metadata?.RetryContext?.MaxRetryCount;
+  let exception = req?.body?.Metadata?.RetryContext?.Exception?.message || '';
+  let errorString = 'An error occurred';
+  let json = JSON.stringify({ functionName: req.url.replace("/", ""), retryCount, maxRetry });
+  if (retryCount < maxRetry) {
+    res.status(500).send(x)
+  }
+  else{
+    res.status(200).send(x)
+  }
+})
+
+var x = {
+  "returnValue": "hello",
+  "outputs": {
+    "key1": "value"
+  }
+}
+
+app.listen(port, () => {
+  console.log(`Example app listening on port ${port}`)
+})
