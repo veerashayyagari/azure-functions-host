@@ -2,6 +2,7 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -11,6 +12,7 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Script.Extensions;
 using Microsoft.Azure.WebJobs.Script.WebHost.Authentication;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Microsoft.Azure.WebJobs.Script.WebHost.Security.Authorization.Policies
 {
@@ -22,6 +24,7 @@ namespace Microsoft.Azure.WebJobs.Script.WebHost.Security.Authorization.Policies
             {
                 p.AddScriptAuthenticationSchemes();
                 p.AddRequirements(new AuthLevelRequirement(AuthorizationLevel.Admin));
+                p.RequireAssertion(PlatformInternalCheck);
             });
 
             options.AddPolicy(PolicyNames.SystemAuthLevel, p =>
@@ -33,6 +36,7 @@ namespace Microsoft.Azure.WebJobs.Script.WebHost.Security.Authorization.Policies
             options.AddPolicy(PolicyNames.AdminAuthLevelOrInternal, p =>
             {
                 p.AddScriptAuthenticationSchemes();
+                p.RequireAssertion(PlatformInternalCheck);
                 p.RequireAssertion(async c =>
                 {
                     if (c.Resource is AuthorizationFilterContext filterContext)
@@ -95,6 +99,21 @@ namespace Microsoft.Azure.WebJobs.Script.WebHost.Security.Authorization.Policies
             builder.AuthenticationSchemes.Add(ArmAuthenticationDefaults.AuthenticationScheme);
             builder.AuthenticationSchemes.Add(AuthLevelAuthenticationDefaults.AuthenticationScheme);
             builder.AuthenticationSchemes.Add(JwtBearerDefaults.AuthenticationScheme);
+        }
+
+        private static bool PlatformInternalCheck(AuthorizationHandlerContext c)
+        {
+            if (c.Resource is AuthorizationFilterContext filterContext)
+            {
+                var environment = filterContext.HttpContext.RequestServices.GetRequiredService<IEnvironment>();
+                if (environment.IsAdminIsolationEnabled() &&
+                    !filterContext.HttpContext.Request.IsPlatformInternalRequest(environment))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 }

@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Primitives;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -23,6 +24,18 @@ namespace Microsoft.Azure.WebJobs.Script.Extensions
     {
         private static readonly PathString _adminRoot = new PathString("/admin");
         private static readonly PathString _adminDownloadRequestRoot = new PathString("/admin/functions/download");
+
+        public static bool IsPlatformInternalRequest(this HttpRequest request, IEnvironment environment)
+        {
+            if (!environment.IsAppService())
+            {
+                return false;
+            }
+
+            var header = request.Headers[ScriptConstants.AntaresPlatformInternal];
+            string value = header.FirstOrDefault();
+            return string.Compare(value, "true", StringComparison.OrdinalIgnoreCase) == 0;
+        }
 
         public static bool IsAdminRequest(this HttpRequest request)
         {
