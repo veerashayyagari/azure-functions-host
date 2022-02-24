@@ -37,7 +37,7 @@ namespace Microsoft.Azure.WebJobs.Script.WebHost
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args = null)
         {
-            return new WebHostBuilder()
+            return CreateDefaultBuilder(args)
                 .ConfigureKestrel(o =>
                 {
                     o.Limits.MaxRequestBodySize = ScriptConstants.DefaultMaxRequestBodySize;
@@ -77,6 +77,65 @@ namespace Microsoft.Azure.WebJobs.Script.WebHost
                     loggingBuilder.AddWebJobsSystem<WebHostSystemLoggerProvider>();
                 })
                 .UseStartup<Startup>();
+        }
+
+        public static IWebHostBuilder CreateDefaultBuilder(string[] args)
+        {
+            var builder = new WebHostBuilder();
+
+            if (string.IsNullOrEmpty(builder.GetSetting(WebHostDefaults.ContentRootKey)))
+            {
+                builder.UseContentRoot(Directory.GetCurrentDirectory());
+            }
+            if (args != null)
+            {
+                builder.UseConfiguration(new ConfigurationBuilder().AddCommandLine(args).Build());
+            }
+
+            builder.ConfigureAppConfiguration((hostingContext, config) =>
+            {
+                var env = hostingContext.HostingEnvironment;
+
+                config.AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
+                    .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true, reloadOnChange: false);
+
+                if (env.IsDevelopment())
+                {
+                    var appAssembly = Assembly.Load(new AssemblyName(env.ApplicationName));
+                    if (appAssembly != null)
+                    {
+                        config.AddUserSecrets(appAssembly, optional: true);
+                    }
+                }
+
+                config.AddEnvironmentVariables();
+
+                if (args != null)
+                {
+                    config.AddCommandLine(args);
+                }
+            })
+            .ConfigureLogging((hostingContext, loggingBuilder) =>
+            {
+                loggingBuilder.Configure(options =>
+                {
+                    options.ActivityTrackingOptions = ActivityTrackingOptions.SpanId
+                                                        | ActivityTrackingOptions.TraceId
+                                                        | ActivityTrackingOptions.ParentId;
+                });
+                loggingBuilder.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+                loggingBuilder.AddConsole();
+                loggingBuilder.AddDebug();
+                loggingBuilder.AddEventSourceLogger();
+            }).
+            UseDefaultServiceProvider((context, options) =>
+            {
+                options.ValidateScopes = context.HostingEnvironment.IsDevelopment();
+            });
+
+            ConfigureWebDefaults(builder);
+
+            return builder;
         }
 
         /// <summary>
