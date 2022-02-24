@@ -152,16 +152,18 @@ namespace Microsoft.Azure.WebJobs.Script.WebHost
         /// </summary>
         private void InitializeFileWatchers()
         {
+            _logger.LogDebug($"VALIDATE: In start of InitializeFileWatcher: RootScriptPath={_scriptOptions.RootScriptPath} || FileWatchingEnabled={_scriptOptions.FileWatchingEnabled}");
+
             if (_scriptOptions.FileWatchingEnabled)
             {
+                _logger.LogDebug($"VALIDATE: Inside FileWatchingEnabled");
                 _fileEventSource = new FileWatcherEventSource(_eventManager, EventSources.ScriptFiles, _scriptOptions.RootScriptPath);
-
                 _eventSubscriptions.Add(_eventManager.OfType<FileEvent>()
-                        .Where(f => string.Equals(f.Source, EventSources.ScriptFiles, StringComparison.Ordinal))
-                        .Subscribe(e => OnFileChanged(e.FileChangeArguments)));
-
+                .Where(f => string.Equals(f.Source, EventSources.ScriptFiles, StringComparison.Ordinal))
+                .Subscribe(e => OnFileChanged(e.FileChangeArguments)));
                 _logger.LogDebug("File event source initialized.");
             }
+            _logger.LogDebug($"VALIDATE: After if-statement on FileWatchingEnabled");
 
             _eventSubscriptions.Add(_eventManager.OfType<HostRestartEvent>()
                     .Subscribe((msg) => ScheduleRestartAsync(false)
