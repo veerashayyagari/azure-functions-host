@@ -90,7 +90,7 @@ namespace Microsoft.Azure.WebJobs.Script.Config
         internal static IConfigurationBuilder CreateDefaultConfigurationBuilder()
         {
             return new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: true)
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
                 .Add(new ScriptEnvironmentVariablesConfigurationSource());
         }
     }
