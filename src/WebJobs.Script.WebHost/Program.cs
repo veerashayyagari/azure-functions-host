@@ -83,10 +83,10 @@ namespace Microsoft.Azure.WebJobs.Script.WebHost
         {
             var builder = new WebHostBuilder();
 
-            if (string.IsNullOrEmpty(builder.GetSetting(WebHostDefaults.ContentRootKey)))
-            {
+            //if (string.IsNullOrEmpty(builder.GetSetting(WebHostDefaults.ContentRootKey)))
+            //{
                 builder.UseContentRoot("/azure-functions-host");
-            }
+            //}
             if (args != null)
             {
                 builder.UseConfiguration(new ConfigurationBuilder().AddCommandLine(args).Build());
