@@ -85,7 +85,7 @@ namespace Microsoft.Azure.WebJobs.Script.WebHost
 
             if (string.IsNullOrEmpty(builder.GetSetting(WebHostDefaults.ContentRootKey)))
             {
-                builder.UseContentRoot(Directory.GetCurrentDirectory());
+                builder.UseContentRoot("/azure-functions-host");
             }
             if (args != null)
             {
