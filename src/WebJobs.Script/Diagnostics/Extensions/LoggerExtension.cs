@@ -26,6 +26,16 @@ namespace Microsoft.Azure.WebJobs.Script.Diagnostics.Extensions
                 new EventId(302, nameof(ScriptStartUpErrorLoadingExtensionBundle)),
                 "Unable to find or download extension bundle");
 
+        private static readonly Action<ILogger, string, string, Exception> _AutoRecoveringConstructorLog =
+        LoggerMessage.Define<string, string>(LogLevel.Information,
+           new EventId(303, nameof(ScriptStartUpLoadingExtensionBundle)),
+           "VALIDATE: in class AutoRecoveringFileSystemWatcher constructor, includeSubdirectories = {includeSubdirectories} and path = {path}");
+
+        private static readonly Action<ILogger, string, string, Exception> _AutoRecoveringInitializeWatcherLog =
+        LoggerMessage.Define<string, string>(LogLevel.Information,
+           new EventId(303, nameof(ScriptStartUpLoadingExtensionBundle)),
+           "VALIDATE: in class AutoRecoveringInitializeWatcherLog constructor, filter = {_filter},  path = {_path}");
+
         private static readonly Action<ILogger, string, Exception> _scriptStartUpLoadingExtensionBundle =
            LoggerMessage.Define<string>(LogLevel.Information,
                new EventId(303, nameof(ScriptStartUpLoadingExtensionBundle)),
@@ -189,6 +199,16 @@ namespace Microsoft.Azure.WebJobs.Script.Diagnostics.Extensions
         public static void ScriptStartUpLoadingExtensionBundle(this ILogger logger, string path)
         {
             _scriptStartUpLoadingExtensionBundle(logger, path, null);
+        }
+
+        public static void AutoRecoveringConstructorLog(this ILogger logger, string includeSubdirectories, string path)
+        {
+            _AutoRecoveringConstructorLog(logger, includeSubdirectories, path, null);
+        }
+
+        public static void AutoRecoveringInitializeWatcherLog(this ILogger logger, string filter, string path)
+        {
+            _AutoRecoveringInitializeWatcherLog(logger, filter, path, null);
         }
 
         public static void ScriptStartupResettingLoadContextWithBasePath(this ILogger logger, string path)

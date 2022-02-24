@@ -40,7 +40,9 @@ namespace Microsoft.Azure.WebJobs.Script.IO
             loggerFactory = loggerFactory ?? NullLoggerFactory.Instance;
             _logger = loggerFactory.CreateLogger("Host." + ScriptConstants.TraceSourceFileWatcher);
 
-            _logger.LogDebug($"VALIDATE: in class AutoRecoveringFileSystemWatcher constructor, includeSubdirectories = {includeSubdirectories} and path = {path}");
+            _logger.AutoRecoveringConstructorLog(includeSubdirectories.ToString(), path);
+
+            // _logger.LogDebug($"VALIDATE: in class AutoRecoveringFileSystemWatcher constructor, includeSubdirectories = {includeSubdirectories} and path = {path}");
 
             InitializeWatcher();
         }
@@ -62,6 +64,8 @@ namespace Microsoft.Azure.WebJobs.Script.IO
             lock (_syncRoot)
             {
                 _cancellationToken.ThrowIfCancellationRequested();
+
+                _logger.AutoRecoveringInitializeWatcherLog(_filter, _path);
 
                 _fileWatcher = new FileSystemWatcher(_path, _filter)
                 {
