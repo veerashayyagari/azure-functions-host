@@ -88,6 +88,9 @@ namespace Microsoft.Azure.WebJobs.Script
                     functions = await _hostFunctionMetadataProvider.GetFunctionMetadataAsync(workerConfigs, environment, forceRefresh);
                 }
             }
+            // Validate if the app has functions in legacy format and add in logs to inform about the mixed app
+            _ = Task.Delay(TimeSpan.FromMinutes(1)).ContinueWith(t => ValidateFunctionAppFormat(_scriptOptions.Value.RootScriptPath, _logger));
+
             _functions = functions.ToImmutableArray();
             _logger.FunctionMetadataProviderFunctionFound(_functions.IsDefault ? 0 : _functions.Count());
             return _functions;
