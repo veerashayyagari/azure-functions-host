@@ -14,6 +14,7 @@ using Microsoft.Azure.WebJobs.Script.Diagnostics.Extensions;
 using Microsoft.Azure.WebJobs.Script.Workers;
 using Microsoft.Azure.WebJobs.Script.Workers.Rpc;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Azure.WebJobs.Script
@@ -48,6 +49,11 @@ namespace Microsoft.Azure.WebJobs.Script
             {
                 IEnumerable<RawFunctionMetadata> rawFunctions = new List<RawFunctionMetadata>();
                 bool workerIndexing = Utility.CanWorkerIndex(workerConfigs, environment);
+
+                var workerRuntime = environment.GetEnvironmentVariable(EnvironmentSettingNames.FunctionWorkerRuntime);
+                var value = Microsoft.Azure.WebJobs.Script.Config.FeatureFlags.IsEnabled(ScriptConstants.FeatureFlagEnableWorkerIndexing, environment);
+                _logger.LogInformation($"worker indexing value = {workerIndexing}");
+                _logger.LogInformation($"Feature flag = {value} and workerRuntime = {workerRuntime} and workerconfigs = {JsonConvert.SerializeObject(workerConfigs)}");
 
                 if (workerIndexing)
                 {
