@@ -8,6 +8,7 @@ using System.IO.Abstractions;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs.Script.Description;
@@ -16,6 +17,7 @@ using Microsoft.Azure.WebJobs.Script.Workers;
 using Microsoft.Azure.WebJobs.Script.Workers.Rpc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Microsoft.Azure.WebJobs.Script
@@ -53,6 +55,11 @@ namespace Microsoft.Azure.WebJobs.Script
             {
                 IEnumerable<RawFunctionMetadata> rawFunctions = new List<RawFunctionMetadata>();
                 bool workerIndexing = Utility.CanWorkerIndex(workerConfigs, environment);
+
+                var workerRuntime = environment.GetEnvironmentVariable(EnvironmentSettingNames.FunctionWorkerRuntime);
+                var value = Microsoft.Azure.WebJobs.Script.Config.FeatureFlags.IsEnabled(ScriptConstants.FeatureFlagEnableWorkerIndexing, environment);
+                _logger.LogInformation($"worker indexing value = {workerIndexing}");
+                _logger.LogInformation($"Feature flag = {value} and workerRuntime = {workerRuntime} and workerconfigs = {JsonConvert.SerializeObject(workerConfigs)}");
 
                 if (workerIndexing)
                 {
