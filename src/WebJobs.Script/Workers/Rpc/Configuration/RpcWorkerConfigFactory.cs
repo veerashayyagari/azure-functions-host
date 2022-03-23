@@ -40,6 +40,7 @@ namespace Microsoft.Azure.WebJobs.Script.Workers.Rpc
             {
                 WorkersDirPath = workersDirectorySection.Value;
             }
+            _environment.SetEnvironmentVariable(EnvironmentSettingNames.WorkerDirectoryPath, WorkersDirPath);
         }
 
         public string WorkersDirPath { get; }
