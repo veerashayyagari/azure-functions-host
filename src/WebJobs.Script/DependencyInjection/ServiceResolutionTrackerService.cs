@@ -7,12 +7,23 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Script.DependencyInjection
 {
-    internal class ServiceResolutionTrackerService : IHostedService
+    public sealed class ServiceResolutionTrackerService : IHostedService
     {
+        private readonly ILogger<ServiceResolutionTrackerService> _logger;
+
         private string filePath = string.Empty;
+
+        private bool _shouldLogToTextFile = false;
+
+        public ServiceResolutionTrackerService(ILogger<ServiceResolutionTrackerService> logger)
+        {
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _shouldLogToTextFile = string.Equals(Environment.GetEnvironmentVariable("FUNCTIONS_SERVICE_RESOLUTION_FILE_LOG_ENABLED"), "1");
+        }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
@@ -28,7 +39,7 @@ namespace Microsoft.Azure.WebJobs.Script.DependencyInjection
 
         private async Task StartListening(CancellationToken ct)
         {
-            Console.WriteLine("ServiceResolutionTrackerService Started Listening");
+            _logger.LogInformation($"{nameof(ServiceResolutionTrackerService)} started listening");
             CreateLogFile();
             ISourceBlock<ServiceResolutionInfo> source = ServiceResolutionLogChannel.Instance.LogStream;
 
@@ -48,6 +59,11 @@ namespace Microsoft.Azure.WebJobs.Script.DependencyInjection
 
         private void CreateLogFile()
         {
+            if (!_shouldLogToTextFile)
+            {
+                return;
+            }
+
             string path = Directory.GetCurrentDirectory();
             string pathString = Path.Combine(path, "service-resolution-logs-" + Guid.NewGuid() + ".txt");
 
@@ -63,8 +79,12 @@ namespace Microsoft.Azure.WebJobs.Script.DependencyInjection
 
         private void WriteToLog(string line)
         {
-            File.AppendAllLines(filePath, new string[] { line });
-            //Console.WriteLine("Received in buffer block:" + line);
+            _logger.LogInformation(line);
+
+            if (_shouldLogToTextFile)
+            {
+                File.AppendAllLines(filePath, new string[] { line });
+            }
         }
     }
 }
