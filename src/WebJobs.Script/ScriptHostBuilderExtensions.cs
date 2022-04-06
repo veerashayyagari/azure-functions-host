@@ -179,6 +179,7 @@ namespace Microsoft.Azure.WebJobs.Script
                 // Wire this up early so that any early worker logs are guaranteed to be flushed if any other
                 // IHostedService has a slow startup.
                 services.AddSingleton<IHostedService, WorkerConsoleLogService>();
+                RegisterServiceResolutionLoggingService(services);
             });
 
             builder.ConfigureWebJobs((context, webJobsBuilder) =>
@@ -433,6 +434,14 @@ namespace Microsoft.Azure.WebJobs.Script
             services.AddAzureStorageCoreServices();
             services.TryAddSingleton<IAzureStorageProvider, AzureStorageProvider>();
             services.AddAzureStorageBlobs();
+        }
+
+        private static void RegisterServiceResolutionLoggingService(IServiceCollection services)
+        {
+            if (string.Equals(Environment.GetEnvironmentVariable("FUNCTIONS_SERVICE_RESOLUTION_LOG_ENABLED"), "1"))
+            {
+                services.AddSingleton<IHostedService, ServiceResolutionTrackerService>();
+            }
         }
 
         private static void RegisterFileProvisioningService(IHostBuilder builder)
