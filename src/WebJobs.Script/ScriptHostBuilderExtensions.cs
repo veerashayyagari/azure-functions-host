@@ -91,6 +91,8 @@ namespace Microsoft.Azure.WebJobs.Script
 
                 loggingBuilder.AddConsoleIfEnabled(context);
 
+                RegisterServiceResolutionLoggingService(loggingBuilder.Services);
+
                 ConfigureApplicationInsights(context, loggingBuilder);
             })
             .ConfigureAppConfiguration((context, configBuilder) =>
@@ -181,7 +183,6 @@ namespace Microsoft.Azure.WebJobs.Script
                 // Wire this up early so that any early worker logs are guaranteed to be flushed if any other
                 // IHostedService has a slow startup.
                 services.AddSingleton<IHostedService, WorkerConsoleLogService>();
-                RegisterServiceResolutionLoggingService(services);
             });
 
             builder.ConfigureWebJobs((context, webJobsBuilder) =>
