@@ -22,38 +22,38 @@ namespace Microsoft.Azure.WebJobs.Script.DependencyInjection
         public ServiceResolutionTrackerService(ILogger<ServiceResolutionTrackerService> logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _shouldLogToTextFile = string.Equals(Environment.GetEnvironmentVariable("FUNCTIONS_SERVICE_RESOLUTION_FILE_LOG_ENABLED"), "1");
+            _shouldLogToTextFile = true; // string.Equals(Environment.GetEnvironmentVariable("FUNCTIONS_SERVICE_RESOLUTION_FILE_LOG_ENABLED"), "1");
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            _ = StartListening(cancellationToken);
+            _ = StartListeningToChannelStream(cancellationToken);
 
             return Task.CompletedTask;
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
+            _logger.LogInformation($"{nameof(ServiceResolutionTrackerService)} StopAsync was called.");
             return Task.CompletedTask;
         }
 
-        private async Task StartListening(CancellationToken ct)
+        private async Task StartListeningToChannelStream(CancellationToken ct)
         {
             _logger.LogInformation($"{nameof(ServiceResolutionTrackerService)} started listening");
             CreateLogFile();
-            ISourceBlock<ServiceResolutionInfo> source = ServiceResolutionLogChannel.Instance.LogStream;
+            var channelReader = ServiceResolutionLogChannel.Instance.LogStream;
 
             try
             {
-                while (await source.OutputAvailableAsync(ct))
+                await foreach (var msg in channelReader.ReadAllAsync(ct))
                 {
-                    var msg = await source.ReceiveAsync();
-                    WriteToLog(msg.Name + ", duration:" + msg.TimeTaken.TotalMilliseconds + "(ms)");
+                    WriteToLog($"{msg.Name}"); //, duration:{msg.TimeTaken.TotalMilliseconds}(ms)");
                 }
             }
             catch (OperationCanceledException)
             {
-                // This occurs during shutdown.
+                _logger.LogInformation($"Operation cancelled (due to app stopping) in StartListening. No action needed.");
             }
         }
 
