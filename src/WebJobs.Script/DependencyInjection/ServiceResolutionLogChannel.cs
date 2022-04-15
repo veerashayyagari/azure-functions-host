@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
 using System.Threading.Channels;
-using System.Threading.Tasks.Dataflow;
 
 namespace Microsoft.Azure.WebJobs.Script.DependencyInjection
 {

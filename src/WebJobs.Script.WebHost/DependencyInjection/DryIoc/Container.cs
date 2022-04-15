@@ -73,7 +73,7 @@ namespace DryIoc
     /// <summary>IoC Container. Documentation is available at https://bitbucket.org/dadhi/dryioc. </summary>
     public sealed partial class Container : IContainer
     {
-        ServiceResolutionLogChannel myChannel = ServiceResolutionLogChannel.Instance;
+        ServiceResolutionLogChannel serviceResolutionLogChannel = ServiceResolutionLogChannel.Instance;
         /// <summary>Creates new container with default rules <see cref="DryIoc.Rules.Default"/>.</summary>
         public Container(bool preferInterpretation = false) : this(Rules.Default, Ref.Of(Registry.Default), NewSingletonScope(), preferInterpretation: preferInterpretation)
         { }
@@ -202,7 +202,7 @@ namespace DryIoc
                    ResolveAndCacheDefaultFactoryDelegate(serviceType, ifUnresolved);
             sw.Stop();
 
-            myChannel.Send(new ServiceResolutionInfo
+            serviceResolutionLogChannel.Send(new ServiceResolutionInfo
             {
                 Name = serviceType.FullName,
                 TimeTaken = sw.Elapsed
