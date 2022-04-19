@@ -73,7 +73,6 @@ namespace DryIoc
     /// <summary>IoC Container. Documentation is available at https://bitbucket.org/dadhi/dryioc. </summary>
     public sealed partial class Container : IContainer
     {
-        ServiceResolutionLogChannel serviceResolutionLogChannel = ServiceResolutionLogChannel.Instance;
         /// <summary>Creates new container with default rules <see cref="DryIoc.Rules.Default"/>.</summary>
         public Container(bool preferInterpretation = false) : this(Rules.Default, Ref.Of(Registry.Default), NewSingletonScope(), preferInterpretation: preferInterpretation)
         { }
@@ -195,21 +194,9 @@ namespace DryIoc
 
         #region IResolver
 
-        object IResolver.Resolve(Type serviceType, IfUnresolved ifUnresolved)
-        {
-            var sw = Stopwatch.StartNew();
-            var i = _registry.Value.DefaultFactoryDelegateCache.Value.GetValueOrDefault(serviceType)?.Invoke(this) ??
-                   ResolveAndCacheDefaultFactoryDelegate(serviceType, ifUnresolved);
-            sw.Stop();
-
-            serviceResolutionLogChannel.Send(new ServiceResolutionInfo
-            {
-                Name = serviceType.FullName,
-                TimeTaken = sw.Elapsed
-            });
-
-            return i;
-        }
+        object IResolver.Resolve(Type serviceType, IfUnresolved ifUnresolved) =>
+            _registry.Value.DefaultFactoryDelegateCache.Value.GetValueOrDefault(serviceType)?.Invoke(this) ??
+            ResolveAndCacheDefaultFactoryDelegate(serviceType, ifUnresolved);
 
         private object ResolveAndCacheDefaultFactoryDelegate(Type serviceType, IfUnresolved ifUnresolved)
         {
@@ -1439,6 +1426,8 @@ namespace DryIoc
 
         internal sealed class InstanceFactory : Factory
         {
+            ServiceResolutionLogChannel _logChannel = ServiceResolutionLogChannel.Instance;
+
             public override Type ImplementationType { get; }
             public override bool HasRuntimeState => true;
 
@@ -1472,8 +1461,21 @@ namespace DryIoc
                     ?? CreateExpressionOrDefault(request);
             }
 
-            public override Expr CreateExpressionOrDefault(Request request) =>
-                Resolver.CreateResolutionExpression(request);
+            public override Expr CreateExpressionOrDefault(Request request)
+            {
+                var sw = Stopwatch.StartNew();
+                var exp = Resolver.CreateResolutionExpression(request);
+                sw.Stop();
+
+                _logChannel.Send(new ServiceResolutionInfo
+                {
+                    Name = request.ServiceType.FullName,
+                    TimeTaken = sw.Elapsed,
+                    Source = "InstanceFactory.CreateExpressionOrDefault"
+                });
+
+                return exp;
+            }
 
             #region Implementation
 
@@ -6985,6 +6987,8 @@ namespace DryIoc
     /// creates expression for each reflected dependency, and composes result service expression.</summary>
     public sealed class ReflectionFactory : Factory
     {
+        ServiceResolutionLogChannel _logChannel = ServiceResolutionLogChannel.Instance;
+
         /// <summary>Non-abstract service implementation type. May be open generic.</summary>
         public override Type ImplementationType
         {
@@ -7029,6 +7033,7 @@ namespace DryIoc
         /// <summary>Creates service expression.</summary>
         public override Expr CreateExpressionOrDefault(Request request)
         {
+            var sw = Stopwatch.StartNew();
             var container = request.Container;
             var rules = container.Rules;
 
@@ -7115,7 +7120,17 @@ namespace DryIoc
                 paramExprs[i] = paramExpr;
             }
 
-            return CreateServiceExpression(ctorOrMember, factoryExpr, paramExprs, request);
+            var ex = CreateServiceExpression(ctorOrMember, factoryExpr, paramExprs, request);
+            sw.Stop();
+
+            _logChannel.Send(new ServiceResolutionInfo
+            {
+                Name = request.ServiceType.FullName,
+                TimeTaken = sw.Elapsed,
+                Source = "ReflectionFactory.CreateExpressionOrDefault"
+            });
+
+            return ex;
         }
 
         internal override bool ThrowIfInvalidRegistration(Type serviceType, object serviceKey, bool isStaticallyChecked, Rules rules)
@@ -7698,6 +7713,8 @@ namespace DryIoc
     /// <summary>Creates service expression using client provided expression factory delegate.</summary>
     public sealed class ExpressionFactory : Factory
     {
+        ServiceResolutionLogChannel _logChannel = ServiceResolutionLogChannel.Instance;
+
         /// <summary>Wraps provided delegate into factory.</summary>
         /// <param name="getServiceExpression">Delegate that will be used internally to create service expression.</param>
         /// <param name="reuse">(optional) Reuse.</param> <param name="setup">(optional) Setup.</param>
@@ -7710,8 +7727,22 @@ namespace DryIoc
 
         /// <summary>Creates service expression using wrapped delegate.</summary>
         /// <param name="request">Request to resolve.</param> <returns>Expression returned by stored delegate.</returns>
-        public override Expr CreateExpressionOrDefault(Request request) =>
-            _getServiceExpression(request);
+        public override Expr CreateExpressionOrDefault(Request request)
+        {
+            var sw = Stopwatch.StartNew();
+            var exp = _getServiceExpression(request);
+            sw.Stop();
+
+            var di = new ServiceResolutionInfo
+            {
+                Name = request.ServiceType.FullName,
+                TimeTaken = sw.Elapsed,
+                Source = "ExpressionFactory.CreateExpressionOrDefault"
+            };
+            _logChannel.Send(di);
+
+            return exp;
+        }
 
         private readonly Func<Request, Expr> _getServiceExpression;
     }
@@ -7720,6 +7751,8 @@ namespace DryIoc
     /// and where possible it uses delegate directly: without converting it to expression.</summary>
     public sealed class DelegateFactory : Factory
     {
+        ServiceResolutionLogChannel _logChannel = ServiceResolutionLogChannel.Instance;
+
         /// <summary>Non-abstract closed implementation type.</summary>
         public override Type ImplementationType => _knownImplementationType;
 
@@ -7738,9 +7771,20 @@ namespace DryIoc
         /// <summary>Create expression by wrapping call to stored delegate with provided request.</summary>
         public override Expr CreateExpressionOrDefault(Request request)
         {
+            var sw = Stopwatch.StartNew();
             var delegateExpr = request.Container.GetConstantExpression(_factoryDelegate);
             var resolverExpr = ResolverContext.GetRootOrSelfExpr(request);
-            return Convert(Invoke(delegateExpr, resolverExpr), request.GetActualServiceType());
+            var ex = Convert(Invoke(delegateExpr, resolverExpr), request.GetActualServiceType());
+            sw.Stop();
+
+            _logChannel.Send(new ServiceResolutionInfo
+            {
+                Name = request.ServiceType.FullName,
+                TimeTaken = sw.Elapsed,
+                Source = "DelegateFactory.CreateExpressionOrDefault"
+            });
+
+            return ex;
         }
 
         /// <summary>If possible returns delegate directly, without creating expression trees, just wrapped in <see cref="FactoryDelegate"/>.

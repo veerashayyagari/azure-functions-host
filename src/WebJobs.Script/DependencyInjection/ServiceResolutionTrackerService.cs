@@ -48,7 +48,7 @@ namespace Microsoft.Azure.WebJobs.Script.DependencyInjection
             {
                 await foreach (var msg in channelReader.ReadAllAsync(ct))
                 {
-                    WriteToLog($"{msg.Name}, duration:{msg.TimeTaken.TotalMilliseconds}(ms)");
+                    WriteToLog($"{msg.Name}, duration:{msg.TimeTaken.TotalMilliseconds}(ms), source:{msg.Source}");
                 }
             }
             catch (OperationCanceledException)
