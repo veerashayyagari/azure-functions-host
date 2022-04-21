@@ -4,6 +4,7 @@
 using System;
 using System.Threading.Tasks;
 using Grpc.Core;
+using Microsoft.Azure.WebJobs.Script.Config;
 using Microsoft.Azure.WebJobs.Script.Grpc.Messages;
 
 namespace Microsoft.Azure.WebJobs.Script.Grpc
@@ -28,30 +29,19 @@ namespace Microsoft.Azure.WebJobs.Script.Grpc
             }
         }
 
-        public static bool IsInvocationFailure(this StatusResult statusResult, out Exception exception)
-        {
-            switch (statusResult.Status)
-            {
-                case StatusResult.Types.Status.Failure:
-                    exception = GetInvocationException(statusResult);
-                    return true;
-
-                case StatusResult.Types.Status.Cancelled:
-                    exception = new TaskCanceledException();
-                    return true;
-
-                default:
-                    exception = null;
-                    return false;
-            }
-        }
-
         public static bool IsInvocationSuccess<T>(this StatusResult status, TaskCompletionSource<T> tcs)
         {
             switch (status.Status)
             {
                 case StatusResult.Types.Status.Failure:
-                    tcs.SetException(GetInvocationException(status));
+                    if (FeatureFlags.IsEnabled(ScriptConstants.FeatureFlagEnableWorkerInvocationException))
+                    {
+                        tcs.SetException(GetInvocationException(status));
+                    }
+                    else
+                    {
+                        tcs.SetException(GetRpcException(status));
+                    }
                     return false;
 
                 case StatusResult.Types.Status.Cancelled:
