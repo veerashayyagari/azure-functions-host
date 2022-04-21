@@ -14,7 +14,7 @@ namespace Microsoft.Azure.WebJobs.Script.Grpc
             switch (statusResult.Status)
             {
                 case StatusResult.Types.Status.Failure:
-                    exception = GetRpcException(statusResult);
+                    exception = GetInvocationException(statusResult);
                     return true;
 
                 case StatusResult.Types.Status.Cancelled:
@@ -32,7 +32,7 @@ namespace Microsoft.Azure.WebJobs.Script.Grpc
             switch (status.Status)
             {
                 case StatusResult.Types.Status.Failure:
-                    tcs.SetException(GetRpcException(status));
+                    tcs.SetException(GetInvocationException(status));
                     return false;
 
                 case StatusResult.Types.Status.Cancelled:
@@ -53,6 +53,17 @@ namespace Microsoft.Azure.WebJobs.Script.Grpc
                 return new Workers.Rpc.RpcException(status, ex.Message, ex.StackTrace);
             }
             return new Workers.Rpc.RpcException(status, string.Empty, string.Empty);
+        }
+
+        public static Workers.Rpc.InvocationException GetInvocationException(StatusResult statusResult)
+        {
+            var ex = statusResult?.Exception;
+            var status = statusResult?.Status.ToString();
+            if (ex != null)
+            {
+                return new Workers.Rpc.InvocationException(status, ex.Message, ex.StackTrace);
+            }
+            return new Workers.Rpc.InvocationException(status, string.Empty, string.Empty);
         }
     }
 }
