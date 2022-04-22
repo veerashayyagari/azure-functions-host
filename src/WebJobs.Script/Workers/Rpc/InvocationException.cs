@@ -7,9 +7,20 @@ namespace Microsoft.Azure.WebJobs.Script.Workers.Rpc
 {
     public class InvocationException : Exception
     {
-        public InvocationException(string result, string message, string stack)
-            : base($"Result: {result}\nException: {message}\nStack: {stack}")
+        private string _stack;
+
+        public InvocationException(string message, string stack)
+            : base(message)
         {
+            _stack = stack;
+
+            var className = typeof(Exception).GetField("_className");
+            if (className != null)
+            {
+                className.SetValue(this, "MyTestException");
+            }
         }
+
+        public override string StackTrace => _stack;
     }
 }

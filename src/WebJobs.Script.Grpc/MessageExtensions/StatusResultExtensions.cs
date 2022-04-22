@@ -70,9 +70,9 @@ namespace Microsoft.Azure.WebJobs.Script.Grpc
             var status = statusResult?.Status.ToString();
             if (ex != null)
             {
-                return new Workers.Rpc.InvocationException(status, ex.Message, ex.StackTrace);
+                return new Workers.Rpc.InvocationException(ex.Message, ex.StackTrace);
             }
-            return new Workers.Rpc.InvocationException(status, string.Empty, string.Empty);
+            return new Workers.Rpc.InvocationException(string.Empty, string.Empty);
         }
     }
 }
