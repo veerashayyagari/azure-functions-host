@@ -1470,7 +1470,8 @@ namespace DryIoc
                 {
                     Name = request.ServiceType.FullName,
                     TimeTaken = sw.Elapsed,
-                    Source = "InstanceFactory.CreateExpressionOrDefault"
+                    Source = "InstanceFactory.CreateExpressionOrDefault",
+                    StackTrace = Environment.StackTrace
                 });
 
                 return exp;
@@ -7126,7 +7127,8 @@ namespace DryIoc
             {
                 Name = request.ServiceType.FullName,
                 TimeTaken = sw.Elapsed,
-                Source = "ReflectionFactory.CreateExpressionOrDefault"
+                Source = "ReflectionFactory.CreateExpressionOrDefault",
+                StackTrace = Environment.StackTrace
             });
 
             return ex;
@@ -7736,7 +7738,8 @@ namespace DryIoc
             {
                 Name = request.ServiceType.FullName,
                 TimeTaken = sw.Elapsed,
-                Source = "ExpressionFactory.CreateExpressionOrDefault"
+                Source = "ExpressionFactory.CreateExpressionOrDefault",
+                StackTrace = Environment.StackTrace
             };
             _logChannel.Send(di);
 
@@ -7780,7 +7783,8 @@ namespace DryIoc
             {
                 Name = request.ServiceType.FullName,
                 TimeTaken = sw.Elapsed,
-                Source = "DelegateFactory.CreateExpressionOrDefault"
+                Source = "DelegateFactory.CreateExpressionOrDefault",
+                StackTrace = Environment.StackTrace
             });
 
             return ex;

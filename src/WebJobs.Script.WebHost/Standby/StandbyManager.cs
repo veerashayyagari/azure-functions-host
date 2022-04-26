@@ -222,7 +222,9 @@ namespace Microsoft.Azure.WebJobs.Script.WebHost
                 _specializationTimer?.Dispose();
                 _specializationTimer = null;
 
+                _logger.LogInformation("Invoking SpecializeHostAsync from TimerTick event.");
                 await SpecializeHostAsync();
+                _logger.LogInformation("Await of the SpecializeHostAsync from TimerTick event completed.");
             }
         }
 

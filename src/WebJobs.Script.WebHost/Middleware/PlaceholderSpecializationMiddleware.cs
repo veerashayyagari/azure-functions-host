@@ -1,9 +1,11 @@
 ﻿// Copyright (c) .NET Foundation. All rights reserved.
 // Licensed under the MIT License. See License.txt in the project root for license information.
 
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.WebJobs.Script.WebHost.Middleware
 {
@@ -13,17 +15,19 @@ namespace Microsoft.Azure.WebJobs.Script.WebHost.Middleware
         private readonly IScriptWebHostEnvironment _webHostEnvironment;
         private readonly IStandbyManager _standbyManager;
         private readonly IEnvironment _environment;
+        private readonly ILogger _logger;
         private RequestDelegate _invoke;
         private double _specialized = 0;
 
         public PlaceholderSpecializationMiddleware(RequestDelegate next, IScriptWebHostEnvironment webHostEnvironment,
-            IStandbyManager standbyManager, IEnvironment environment)
+            IStandbyManager standbyManager, IEnvironment environment, Microsoft.Extensions.Logging.ILogger<PlaceholderSpecializationMiddleware> logger)
         {
             _next = next;
             _invoke = InvokeSpecializationCheck;
             _webHostEnvironment = webHostEnvironment;
             _standbyManager = standbyManager;
             _environment = environment;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public async Task Invoke(HttpContext httpContext)
@@ -41,9 +45,11 @@ namespace Microsoft.Azure.WebJobs.Script.WebHost.Middleware
                 Task specializeTask;
                 using (System.Threading.ExecutionContext.SuppressFlow())
                 {
+                    _logger.LogInformation("Kicking of the SpecializeHostAsync task from Middleware");
                     specializeTask = _standbyManager.SpecializeHostAsync();
                 }
                 await specializeTask;
+                _logger.LogInformation("Await of the SpecializeHostAsync task from Middleware completed.");
 
                 if (Interlocked.CompareExchange(ref _specialized, 1, 0) == 0)
                 {

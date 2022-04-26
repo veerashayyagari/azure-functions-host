@@ -12,5 +12,7 @@ namespace Microsoft.Azure.WebJobs.Script.DependencyInjection
         public TimeSpan TimeTaken { get; set; }
 
         public string Source { get; set; }
+
+        public string StackTrace { get; set; }
     }
 }
