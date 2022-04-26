@@ -60,7 +60,7 @@ namespace Microsoft.Azure.WebJobs.Script.DependencyInjection
                 return true;
             }
 
-            return typeWhiteList.Contains(typeName, StringComparer.OrdinalIgnoreCase);
+            return typeWhiteList.Any(item => typeName.StartsWith(item, StringComparison.OrdinalIgnoreCase));
         }
     }
 }
