@@ -14,5 +14,7 @@ namespace Microsoft.Azure.WebJobs.Script.DependencyInjection
         public string Source { get; set; }
 
         public string StackTrace { get; set; }
+
+        public string Expression { get; set; }
     }
 }
