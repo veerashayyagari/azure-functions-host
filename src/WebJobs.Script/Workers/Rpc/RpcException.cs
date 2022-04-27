@@ -11,5 +11,7 @@ namespace Microsoft.Azure.WebJobs.Script.Workers.Rpc
             : base($"Result: {result}\nException: {message}\nStack: {stack}")
         {
         }
+
+        public bool IsEndUserException { get; set; }
     }
 }
