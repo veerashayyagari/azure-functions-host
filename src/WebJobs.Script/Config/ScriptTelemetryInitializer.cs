@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
@@ -41,16 +42,24 @@ namespace Microsoft.Azure.WebJobs.Script.Config
 
             telemetryProps[ScriptConstants.LogPropertyHostInstanceIdKey] = _hostOptions.InstanceId;
             // clean up & set isenduserexception elsewhere
-            if (FeatureFlags.IsEnabled(ScriptConstants.FeatureFlagEnableSurfaceCustomerExceptionToAI)
-                && telemetry is ExceptionTelemetry exceptionTelemetry
-                && exceptionTelemetry.Exception.InnerException is RpcException rpcException
-                && !rpcException.IsEndUserException)
+            //FeatureFlags.IsEnabled(ScriptConstants.FeatureFlagEnableSurfaceCustomerExceptionToAI)  && rpcException.IsEndUserException)
+            if (telemetry is ExceptionTelemetry exceptionTelemetry)
             {
-                var exception = exceptionTelemetry.Exception;
-                // only send relevant piece of stack trace to AI
-                // exceptionTelemetry.SetParsedStack()
-                telemetryProps["test_property_render"] = exception.InnerException.Message;
-                //exceptionTelemetry.st
+                if (exceptionTelemetry.Exception.InnerException is RpcException rpcException)
+                {
+                    var exception = exceptionTelemetry.Exception;
+                    string type = exceptionTelemetry.ExceptionDetailsInfoList[1].TypeName;
+                    string message = exceptionTelemetry.ExceptionDetailsInfoList.FirstOrDefault(s => s.TypeName.Contains("RpcException")).Message;
+                    string[] separating = { "Exception:", "Stack:" };
+                    string[] realMessage = message.Split(separating, System.StringSplitOptions.RemoveEmptyEntries);
+
+                    //exceptionTelemetry.SetParsedStack
+                    // only send relevant piece of stack trace to AI
+                    // exceptionTelemetry.SetParsedStack()
+                    string stack = exception.StackTrace;
+                    telemetryProps["type_name"] = type;
+                    //exceptionTelemetry.st
+                }
             }
         }
     }
