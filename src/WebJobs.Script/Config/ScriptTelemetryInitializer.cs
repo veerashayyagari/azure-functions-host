@@ -41,25 +41,13 @@ namespace Microsoft.Azure.WebJobs.Script.Config
             }
 
             telemetryProps[ScriptConstants.LogPropertyHostInstanceIdKey] = _hostOptions.InstanceId;
-            // clean up & set isenduserexception elsewhere
-            //FeatureFlags.IsEnabled(ScriptConstants.FeatureFlagEnableSurfaceCustomerExceptionToAI)  && rpcException.IsEndUserException)
-            if (telemetry is ExceptionTelemetry exceptionTelemetry)
-            {
-                if (exceptionTelemetry.Exception.InnerException is RpcException rpcException)
-                {
-                    var exception = exceptionTelemetry.Exception;
-                    string type = exceptionTelemetry.ExceptionDetailsInfoList[1].TypeName;
-                    string message = exceptionTelemetry.ExceptionDetailsInfoList.FirstOrDefault(s => s.TypeName.Contains("RpcException")).Message;
-                    string[] separating = { "Exception:", "Stack:" };
-                    string[] realMessage = message.Split(separating, System.StringSplitOptions.RemoveEmptyEntries);
 
-                    //exceptionTelemetry.SetParsedStack
-                    // only send relevant piece of stack trace to AI
-                    // exceptionTelemetry.SetParsedStack()
-                    string stack = exception.StackTrace;
-                    telemetryProps["type_name"] = type;
-                    //exceptionTelemetry.st
-                }
+            if (telemetry is ExceptionTelemetry exceptionTelemetry && exceptionTelemetry.Exception.InnerException is RpcException rpcException
+                && rpcException.IsEndUserException && FeatureFlags.IsEnabled(ScriptConstants.FeatureFlagEnableSurfaceCustomerExceptionToAI))
+            {
+                exceptionTelemetry.ExceptionDetailsInfoList.FirstOrDefault(s => s.TypeName.Contains("RpcException")).Message = rpcException.RemoteMessage;
+                string typeName = string.IsNullOrEmpty(rpcException.RemoteTypeName) ? rpcException.GetType().ToString() : rpcException.RemoteTypeName;
+                exceptionTelemetry.ExceptionDetailsInfoList.FirstOrDefault(s => s.TypeName.Contains("RpcException")).TypeName = typeName;
             }
         }
     }

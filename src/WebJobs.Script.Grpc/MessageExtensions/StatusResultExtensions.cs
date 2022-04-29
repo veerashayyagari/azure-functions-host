@@ -34,14 +34,12 @@ namespace Microsoft.Azure.WebJobs.Script.Grpc
             switch (status.Status)
             {
                 case StatusResult.Types.Status.Failure:
-                    //if (FeatureFlags.IsEnabled(ScriptConstants.FeatureFlagEnableWorkerInvocationException))
-                    //{
-                    //    tcs.SetException(GetInvocationException(status));
-                    //}
-                    //else
-                    //{
-                    tcs.SetException(GetRpcException(status));
-                    //}
+                    if (FeatureFlags.IsEnabled(ScriptConstants.FeatureFlagEnableSurfaceCustomerExceptionToAI))
+                    {
+                        var rpcException = GetRpcException(status);
+                        rpcException.IsEndUserException = true;
+                        tcs.SetException(rpcException);
+                    }
                     return false;
 
                 case StatusResult.Types.Status.Cancelled:
@@ -62,17 +60,6 @@ namespace Microsoft.Azure.WebJobs.Script.Grpc
                 return new Workers.Rpc.RpcException(status, ex.Message, ex.StackTrace);
             }
             return new Workers.Rpc.RpcException(status, string.Empty, string.Empty);
-        }
-
-        public static Workers.Rpc.InvocationException GetInvocationException(StatusResult statusResult)
-        {
-            var ex = statusResult?.Exception;
-            var status = statusResult?.Status.ToString();
-            if (ex != null)
-            {
-                return new Workers.Rpc.InvocationException(ex.Message, ex.StackTrace);
-            }
-            return new Workers.Rpc.InvocationException(string.Empty, string.Empty);
         }
     }
 }
