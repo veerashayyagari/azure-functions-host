@@ -45,7 +45,7 @@ namespace Microsoft.Azure.WebJobs.Script.Config
             if (telemetry is ExceptionTelemetry exceptionTelemetry && exceptionTelemetry.Exception.InnerException is RpcException rpcException
                 && rpcException.IsEndUserException && FeatureFlags.IsEnabled(ScriptConstants.FeatureFlagEnableSurfaceCustomerExceptionToAI))
             {
-                exceptionTelemetry.ExceptionDetailsInfoList.FirstOrDefault(s => s.TypeName.Contains("RpcException")).Message = rpcException.RemoteMessage;
+                exceptionTelemetry.Message = rpcException.RemoteMessage;
                 string typeName = string.IsNullOrEmpty(rpcException.RemoteTypeName) ? rpcException.GetType().ToString() : rpcException.RemoteTypeName;
                 exceptionTelemetry.ExceptionDetailsInfoList.FirstOrDefault(s => s.TypeName.Contains("RpcException")).TypeName = typeName;
             }
