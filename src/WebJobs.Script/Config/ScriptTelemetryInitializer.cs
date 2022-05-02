@@ -43,7 +43,7 @@ namespace Microsoft.Azure.WebJobs.Script.Config
             telemetryProps[ScriptConstants.LogPropertyHostInstanceIdKey] = _hostOptions.InstanceId;
 
             if (telemetry is ExceptionTelemetry exceptionTelemetry && exceptionTelemetry.Exception.InnerException is RpcException rpcException
-                && rpcException.IsEndUserException && FeatureFlags.IsEnabled(ScriptConstants.FeatureFlagEnableSurfaceCustomerExceptionToAI))
+                && rpcException.IsUserException && FeatureFlags.IsEnabled(ScriptConstants.FeatureFlagEnableUserException))
             {
                 exceptionTelemetry.Message = rpcException.RemoteMessage;
                 string typeName = string.IsNullOrEmpty(rpcException.RemoteTypeName) ? rpcException.GetType().ToString() : rpcException.RemoteTypeName;

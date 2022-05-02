@@ -18,7 +18,7 @@ namespace Microsoft.Azure.WebJobs.Script.Workers.Rpc
             }
         }
 
-        public bool IsEndUserException { get; set; }
+        public bool IsUserException { get; set; }
 
         public string RemoteStackTrace { get; set; }
 

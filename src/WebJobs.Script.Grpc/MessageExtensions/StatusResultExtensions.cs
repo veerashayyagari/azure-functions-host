@@ -34,10 +34,10 @@ namespace Microsoft.Azure.WebJobs.Script.Grpc
             switch (status.Status)
             {
                 case StatusResult.Types.Status.Failure:
-                    if (FeatureFlags.IsEnabled(ScriptConstants.FeatureFlagEnableSurfaceCustomerExceptionToAI))
+                    if (FeatureFlags.IsEnabled(ScriptConstants.FeatureFlagEnableUserException))
                     {
                         var rpcException = GetRpcException(status);
-                        rpcException.IsEndUserException = true;
+                        rpcException.IsUserException = true;
                         tcs.SetException(rpcException);
                     }
                     return false;
