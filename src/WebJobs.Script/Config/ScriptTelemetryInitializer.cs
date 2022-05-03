@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DataContracts;
@@ -46,8 +47,20 @@ namespace Microsoft.Azure.WebJobs.Script.Config
                 && rpcException.IsUserException && FeatureFlags.IsEnabled(ScriptConstants.FeatureFlagEnableUserException))
             {
                 exceptionTelemetry.Message = rpcException.RemoteMessage;
+                // TODO - remove. For testing purposes while worker changes aren't in place yet.
+                rpcException.RemoteTypeName = "test";
+
                 string typeName = string.IsNullOrEmpty(rpcException.RemoteTypeName) ? rpcException.GetType().ToString() : rpcException.RemoteTypeName;
+                var detailsInfoItem = exceptionTelemetry.ExceptionDetailsInfoList.FirstOrDefault(s => s.TypeName.Contains("RpcException"));
                 exceptionTelemetry.ExceptionDetailsInfoList.FirstOrDefault(s => s.TypeName.Contains("RpcException")).TypeName = typeName;
+
+                Exception ex = exceptionTelemetry.Exception.InnerException;
+                Exception aex = new Exception();
+                StackTrace st = new StackTrace(aex, true);
+
+                var sf = new System.Diagnostics.StackFrame();
+                System.Diagnostics.StackFrame[] sfa = new System.Diagnostics.StackFrame[] { sf };
+                exceptionTelemetry.SetParsedStack(sfa);
             }
         }
     }

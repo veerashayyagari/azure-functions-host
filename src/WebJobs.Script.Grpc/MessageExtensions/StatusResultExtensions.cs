@@ -34,12 +34,12 @@ namespace Microsoft.Azure.WebJobs.Script.Grpc
             switch (status.Status)
             {
                 case StatusResult.Types.Status.Failure:
+                    var rpcException = GetRpcException(status);
                     if (FeatureFlags.IsEnabled(ScriptConstants.FeatureFlagEnableUserException))
                     {
-                        var rpcException = GetRpcException(status);
                         rpcException.IsUserException = true;
-                        tcs.SetException(rpcException);
                     }
+                    tcs.SetException(rpcException);
                     return false;
 
                 case StatusResult.Types.Status.Cancelled:
