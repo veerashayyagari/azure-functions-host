@@ -11,9 +11,11 @@ namespace Microsoft.Azure.WebJobs.Script.DependencyInjection
     public class ServiceResolutionLogChannel
     {
         private static readonly object Lck = new object();
-        private Channel<ServiceResolutionInfo> channel = Channel.CreateUnbounded<ServiceResolutionInfo>();
         private static ServiceResolutionLogChannel instance = null;
+        private readonly Channel<ServiceResolutionInfo> channel = Channel.CreateUnbounded<ServiceResolutionInfo>();
         private readonly List<string> typeWhiteList = null;
+
+        private bool didSpecializationHapppen = false;
 
         private ServiceResolutionLogChannel()
         {
@@ -43,7 +45,7 @@ namespace Microsoft.Azure.WebJobs.Script.DependencyInjection
 
         public void Send(ServiceResolutionInfo value)
         {
-            if (!ShouldLog(value.Name))
+            if (!DidSpecializationHappen() || !ShouldLogThisType(value.Name))
             {
                 return;
             }
@@ -52,7 +54,7 @@ namespace Microsoft.Azure.WebJobs.Script.DependencyInjection
             channel.Writer.WriteAsync(value);
         }
 
-        private bool ShouldLog(string typeName)
+        private bool ShouldLogThisType(string typeName)
         {
             if (typeWhiteList == null)
             {
@@ -61,6 +63,24 @@ namespace Microsoft.Azure.WebJobs.Script.DependencyInjection
             }
 
             return typeWhiteList.Any(item => typeName.StartsWith(item, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private bool DidSpecializationHappen()
+        {
+            if (didSpecializationHapppen)
+            {
+                return true;
+            }
+
+            // This env variable is set shortly before specialization happens.
+            // This allows us to ignore logging during place holder mode.
+            var envVarValue = Environment.GetEnvironmentVariable("FUNCTIONS_SERVICE_RESOLUTION_LOG_ENABLED");
+            if (!string.IsNullOrWhiteSpace(envVarValue) && envVarValue.Equals("1", StringComparison.OrdinalIgnoreCase))
+            {
+                didSpecializationHapppen = true;
+            }
+
+            return didSpecializationHapppen;
         }
     }
 }

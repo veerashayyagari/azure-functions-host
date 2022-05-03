@@ -441,7 +441,8 @@ namespace Microsoft.Azure.WebJobs.Script
 
         private static void RegisterServiceResolutionLoggingService(IServiceCollection services)
         {
-            if (string.Equals(Environment.GetEnvironmentVariable("FUNCTIONS_SERVICE_RESOLUTION_LOG_ENABLED"), "1"))
+            var envVarValue = Environment.GetEnvironmentVariable("FUNCTIONS_SERVICE_RESOLUTION_LOG_ENABLED");
+            if (!string.IsNullOrWhiteSpace(envVarValue) && envVarValue.Equals("1", StringComparison.OrdinalIgnoreCase))
             {
                 services.AddSingleton<IHostedService, ServiceResolutionTrackerService>();
             }
