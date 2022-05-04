@@ -3,36 +3,17 @@
 
 using System;
 using Microsoft.ApplicationInsights.DataContracts;
-using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.Azure.WebJobs.Script.Config;
+using Microsoft.Azure.WebJobs.Script.WebHost;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace Microsoft.Azure.WebJobs.Script.Tests.Configuration
 {
-    public class ScriptTelemetryInitializerTests
+    public class ScriptTelemetryProcessorTests
     {
-        [Fact]
-        public void Add_Host_Instance_Id_Test()
-        {
-            var telemetry = new RequestTelemetry
-            {
-                Url = new Uri("https://localhost/api/function?name=World"),
-                ResponseCode = "200",
-                Name = "Function Request"
-            };
-
-            var jobHostOptions = new ScriptJobHostOptions();
-            var hostInstanceID = jobHostOptions.InstanceId;
-
-            var initializer = new ScriptTelemetryInitializer(new OptionsWrapper<ScriptJobHostOptions>(jobHostOptions));
-            initializer.Initialize(telemetry);
-
-            Assert.True(telemetry.Context.Properties.TryGetValue(ScriptConstants.LogPropertyHostInstanceIdKey, out string telemetryHostId));
-            Assert.Equal(hostInstanceID, telemetryHostId);
-        }
-
-        // TEMP TEST - TO REMOVE 
+        // TEMP TEST - TO REMOVE
         [Fact]
         public void Test_TelemetryProcessor_AppInsights()
         {
@@ -46,7 +27,7 @@ namespace Microsoft.Azure.WebJobs.Script.Tests.Configuration
             var jobHostOptions = new ScriptJobHostOptions();
             var hostInstanceID = jobHostOptions.InstanceId;
 
-            var processor = 
+
             var initializer = new ScriptTelemetryInitializer(new OptionsWrapper<ScriptJobHostOptions>(jobHostOptions));
             initializer.Initialize(telemetry);
 
@@ -67,6 +48,7 @@ namespace Microsoft.Azure.WebJobs.Script.Tests.Configuration
             {
                 // always skip host startup
                 return _builder.BuildHost(true, false);
+              // _builder.Services.AddTelemetryProcessor();
             }
         }
     }

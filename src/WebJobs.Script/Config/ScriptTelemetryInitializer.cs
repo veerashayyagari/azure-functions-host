@@ -47,8 +47,9 @@ namespace Microsoft.Azure.WebJobs.Script.Config
                 && rpcException.IsUserException && FeatureFlags.IsEnabled(ScriptConstants.FeatureFlagEnableUserException))
             {
                 exceptionTelemetry.Message = rpcException.RemoteMessage;
+
                 // TODO - remove. For testing purposes while worker changes aren't in place yet.
-                rpcException.RemoteTypeName = "test";
+                rpcException.RemoteTypeName = "test SetParsedStack";
 
                 string typeName = string.IsNullOrEmpty(rpcException.RemoteTypeName) ? rpcException.GetType().ToString() : rpcException.RemoteTypeName;
                 var detailsInfoItem = exceptionTelemetry.ExceptionDetailsInfoList.FirstOrDefault(s => s.TypeName.Contains("RpcException"));
@@ -57,6 +58,7 @@ namespace Microsoft.Azure.WebJobs.Script.Config
                 Exception ex = exceptionTelemetry.Exception.InnerException;
                 Exception aex = new Exception();
                 StackTrace st = new StackTrace(aex, true);
+
 
                 var sf = new System.Diagnostics.StackFrame();
                 System.Diagnostics.StackFrame[] sfa = new System.Diagnostics.StackFrame[] { sf };
