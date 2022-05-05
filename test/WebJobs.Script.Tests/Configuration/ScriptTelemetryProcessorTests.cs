@@ -27,13 +27,12 @@ namespace Microsoft.Azure.WebJobs.Script.Tests.Configuration
             var rpcEx = new RpcException("failed", "user message", "user stack", "user exception type");
             rpcEx.IsUserException = true;
 
-            TelemetryConfiguration config = new TelemetryConfiguration();
-            config.ConnectionString = "<connection string>";
+            TelemetryConfiguration config = new TelemetryConfiguration("instrumentation key");
+            config.ConnectionString = "connString";
             ExceptionTelemetry oldEt = new ExceptionTelemetry(rpcEx);
-            config.TelemetryProcessorChainBuilder.Use(next => new MyCustomTelemetryProcessor(next)); //.Use(next2 => new MyCustomTelemetryProcessor(next2));
+            config.TelemetryProcessorChainBuilder.Use(next => new MyCustomTelemetryProcessor(next));
             TelemetryClient client = new TelemetryClient(config);
             client.TrackException(oldEt);
-            //client.Flush();
             await client.FlushAsync(CancellationToken.None);
         }
 
@@ -48,31 +47,33 @@ namespace Microsoft.Azure.WebJobs.Script.Tests.Configuration
 
             public void Process(ITelemetry item)
             {
-                if (item is ExceptionTelemetry exceptionTelemetry && exceptionTelemetry.Exception is RpcException rpcException
-               && rpcException.IsUserException)
+                if (item is ExceptionTelemetry exceptionTelemetry
+                    && exceptionTelemetry.Exception is RpcException rpcException
+                    && rpcException.IsUserException)
                 {
-                    exceptionTelemetry.Message = rpcException.RemoteMessage;
-
-                    // TODO - remove. For testing purposes while worker changes aren't in place yet.
-                    rpcException.RemoteTypeName = "test user exception type";
-
-                    string typeName = string.IsNullOrEmpty(rpcException.RemoteTypeName) ? rpcException.GetType().ToString() : rpcException.RemoteTypeName;
-
-                    var detailsInfoItem = exceptionTelemetry.ExceptionDetailsInfoList.FirstOrDefault(s => s.TypeName.Contains("RpcException"));
-                    exceptionTelemetry.ExceptionDetailsInfoList.FirstOrDefault(s => s.TypeName.Contains("RpcException")).TypeName = typeName;
-
-                    var userExceptionDetails = new ExceptionDetailsInfo(1, -1, typeName, rpcException.RemoteMessage, true, rpcException.RemoteStackTrace, new StackFrame[] { });
-
-                    ExceptionTelemetry newET = new ExceptionTelemetry(new[] { userExceptionDetails },
-                    SeverityLevel.Error, "ProblemId",
-                    new Dictionary<string, string>() { },
-                    new Dictionary<string, double>() { });
-                    this.Next.Process(newET);
+                    item = ToUserException(rpcException, item);
                 }
-                else
-                {
-                    this.Next.Process(item);
-                }
+                this.Next.Process(item);
+            }
+
+            private ITelemetry ToUserException(RpcException rpcException, ITelemetry originalItem)
+            {
+                // TODO - remove. For testing purposes while worker changes aren't in place yet.
+                rpcException.RemoteTypeName = "test user exception type";
+
+                string typeName = string.IsNullOrEmpty(rpcException.RemoteTypeName) ? rpcException.GetType().ToString() : rpcException.RemoteTypeName;
+
+                var userExceptionDetails = new ExceptionDetailsInfo(1, -1, typeName, rpcException.RemoteMessage, true, rpcException.RemoteStackTrace, new StackFrame[] { });
+
+                ExceptionTelemetry newET = new ExceptionTelemetry(new[] { userExceptionDetails },
+                SeverityLevel.Error, "ProblemId",
+                new Dictionary<string, string>() { },
+                new Dictionary<string, double>() { });
+
+                newET.Context.InstrumentationKey = originalItem.Context.InstrumentationKey;
+                newET.Timestamp = originalItem.Timestamp;
+
+                return newET;
             }
         }
     }
