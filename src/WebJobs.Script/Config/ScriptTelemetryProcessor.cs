@@ -3,55 +3,36 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.Azure.WebJobs.Script.Config;
+using Microsoft.Azure.WebJobs.Script.WebHost;
 using Microsoft.Azure.WebJobs.Script.Workers.Rpc;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using StackFrame = Microsoft.ApplicationInsights.DataContracts.StackFrame;
 
 namespace Microsoft.Azure.WebJobs.Script.Config
 {
-    internal class ScriptTelemetryInitializer : ITelemetryInitializer
+    internal class ScriptTelemetryProcessor : ITelemetryProcessor
     {
-        private readonly ScriptJobHostOptions _hostOptions;
-
-        public ScriptTelemetryInitializer(IOptions<ScriptJobHostOptions> hostOptions)
+        public ScriptTelemetryProcessor(ITelemetryProcessor next)
         {
-            if (hostOptions == null)
-            {
-                throw new ArgumentNullException(nameof(hostOptions));
-            }
-
-            if (hostOptions.Value == null)
-            {
-                throw new ArgumentNullException(nameof(hostOptions.Value));
-            }
-
-            _hostOptions = hostOptions.Value;
+            this.Next = next;
         }
 
-        public void Initialize(ITelemetry telemetry)
+        private ITelemetryProcessor Next { get; set; }
+
+        public void Process(ITelemetry item)
         {
-            IDictionary<string, string> telemetryProps = telemetry?.Context?.Properties;
-
-            if (telemetryProps == null)
-            {
-                return;
-            }
-
-            telemetryProps[ScriptConstants.LogPropertyHostInstanceIdKey] = _hostOptions.InstanceId;
-
-            if (telemetry is ExceptionTelemetry exceptionTelemetry && exceptionTelemetry.Exception.InnerException is RpcException rpcException
-                && rpcException.IsUserException && FeatureFlags.IsEnabled(ScriptConstants.FeatureFlagEnableUserException))
+            if (item is ExceptionTelemetry exceptionTelemetry && exceptionTelemetry.Exception is RpcException rpcException
+                && rpcException.IsUserException)
             {
                 exceptionTelemetry.Message = rpcException.RemoteMessage;
 
                 // TODO - remove. For testing purposes while worker changes aren't in place yet.
-                rpcException.RemoteTypeName = "test user exception typename";
+                rpcException.RemoteTypeName = "test user exception type";
 
                 string typeName = string.IsNullOrEmpty(rpcException.RemoteTypeName) ? rpcException.GetType().ToString() : rpcException.RemoteTypeName;
 
@@ -64,6 +45,11 @@ namespace Microsoft.Azure.WebJobs.Script.Config
                 SeverityLevel.Error, "ProblemId",
                 new Dictionary<string, string>() { },
                 new Dictionary<string, double>() { });
+                this.Next.Process(newET);
+            }
+            else
+            {
+                this.Next.Process(item);
             }
         }
     }
