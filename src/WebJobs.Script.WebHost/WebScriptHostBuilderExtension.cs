@@ -124,6 +124,8 @@ namespace Microsoft.Azure.WebJobs.Script.WebHost
                     services.TryAddSingleton<IJobHostMiddlewarePipeline, DefaultMiddlewarePipeline>();
                     services.TryAddEnumerable(ServiceDescriptor.Singleton<IJobHostHttpMiddleware, CustomHttpHeadersMiddleware>());
                     services.TryAddEnumerable(ServiceDescriptor.Singleton<IJobHostHttpMiddleware, HstsConfigurationMiddleware>());
+
+                    services.AddSingleton<IHostedService, ServerlessSecurityHost>();
                     services.AddSingleton<Collector.CollectorBase, CollectorService>();
                     services.AddSingleton<EnvironmentData.EnvironmentDataBase, EnvironmentService>();
                     services.AddSingleton<IRpcServer, GrpcServer>();
