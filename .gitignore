@@ -30,3 +30,4 @@ TestResults/
 local.settings.json
 msbuild.binlog
 BenchmarkDotNet.Artifacts/
+*.json
