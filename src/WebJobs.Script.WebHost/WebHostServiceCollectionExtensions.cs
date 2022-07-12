@@ -4,6 +4,7 @@
 using System.IO.Abstractions;
 using System.Net.Http;
 using System.Runtime.InteropServices;
+using Az.ServerlessSecurity.Platform;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host.Storage;
@@ -172,6 +173,9 @@ namespace Microsoft.Azure.WebJobs.Script.WebHost
             services.AddSingleton<IHostedService, HostedServiceManager>();
 
             // Configuration
+            services.ConfigureOptionsWithChangeTokenSource<ServerlessSecurityDefenderOptions,
+             ServerlessSecurityDefenderOptionsSetup, SpecializationChangeTokenSource<ServerlessSecurityDefenderOptions>>();
+            services.AddHostedService<ServerlessSecurityHost>();
 
             // ScriptApplicationHostOptions are special in that they need to be reset on specialization, but the reset
             // must happen after the StandbyOptions have reset. For this reason, we have a special ChangeTokenSource that
