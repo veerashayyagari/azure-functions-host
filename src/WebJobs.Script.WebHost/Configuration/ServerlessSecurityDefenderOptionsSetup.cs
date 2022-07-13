@@ -9,7 +9,7 @@ namespace Microsoft.Azure.WebJobs.Script.WebHost.Configuration
     internal class ServerlessSecurityDefenderOptionsSetup : IConfigureOptions<ServerlessSecurityDefenderOptions>
     {
         private readonly IEnvironment _environment;
-        
+
         public ServerlessSecurityDefenderOptionsSetup(IEnvironment environment)
         {
             _environment = environment;
