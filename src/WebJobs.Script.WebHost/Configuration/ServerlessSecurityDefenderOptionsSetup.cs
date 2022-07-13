@@ -18,7 +18,7 @@ namespace Microsoft.Azure.WebJobs.Script.WebHost.Configuration
         public void Configure(ServerlessSecurityDefenderOptions options)
         {
             string isEnabled = _environment.GetEnvironmentVariable("AZURE_FUNCTIONS_SECURITY_AGENT_ENABLED");
-            if(!string.IsNullOrEmpty(isEnabled))
+            if (!string.IsNullOrEmpty(isEnabled))
             {
                 options.EnableDefender = isEnabled.Equals("1");
             }
